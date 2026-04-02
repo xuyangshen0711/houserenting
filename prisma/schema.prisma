@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Area {
+  BACK_BAY
+  EVERETT
+  MALDEN
+  ALLSTON
+  CAMBRIDGE
+  SOMERVILLE
+  BROOKLINE
+}
+
+enum LayoutType {
+  STUDIO
+  ONE_BED_ONE_BATH
+  TWO_BED_TWO_BATH
+  THREE_BED_TWO_BATH
+}
+
+enum PetPolicy {
+  OPEN
+  CATS_ONLY
+  CATS_AND_DOGS
+}
+
+model Listing {
+  id            String     @id @default(cuid())
+  slug          String     @unique
+  title         String
+  monthlyRent   Int
+  address       String
+  area          Area
+  layout        LayoutType
+  hasBrokerFee  Boolean    @default(false)
+  isFurnished   Boolean    @default(false)
+  petPolicy     PetPolicy
+  imageUrls     String[]
+  description   String     @db.Text
+  transitInfo   String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([area, monthlyRent])
+  @@index([createdAt])
+}
