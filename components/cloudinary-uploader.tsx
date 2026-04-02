@@ -27,44 +27,23 @@ export function CloudinaryUploader({
 
   async function uploadFiles(files: FileList) {
     try {
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      const uploadPreset =
-        assetType === "video"
-          ? process.env.NEXT_PUBLIC_CLOUDINARY_VIDEO_UPLOAD_PRESET ??
-            process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
-          : process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-      if (!cloudName || !uploadPreset) {
-        setError("请先配置 Cloudinary 的公开环境变量。");
-        return;
-      }
-
-      setError("");
-      const nextUrls: string[] = [];
-
+      const formData = new FormData();
       for (const file of Array.from(files)) {
-        const formData = new FormData();
         formData.append("file", file);
-        formData.append("upload_preset", uploadPreset);
-
-        const response = await fetch(
-          `https://api.cloudinary.com/v1_1/${cloudName}/${assetType}/upload`,
-          {
-            method: "POST",
-            body: formData
-          }
-        );
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error?.message ?? "Cloudinary 上传失败");
-        }
-
-        nextUrls.push(result.secure_url);
       }
 
-      onChange([...value, ...nextUrls]);
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "上传失败");
+      }
+
+      onChange([...value, ...result.urls]);
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "上传失败");
     } finally {
@@ -95,8 +74,8 @@ export function CloudinaryUploader({
             <p className="mt-1 text-sm leading-6 text-slate-500">
               {description ??
                 (assetType === "video"
-                  ? "支持多段视频上传。组件会将视频直接发送到 Cloudinary，并返回 URL 列表。"
-                  : "支持多图上传。组件会将图片直接发送到 Cloudinary，并返回 URL 列表。")}
+                  ? "支持多段视频上传。组件会将视频直接保存到本地磁盘，并返回 URL 列表。"
+                  : "支持多图上传。组件会将图片直接保存到本地磁盘，并返回 URL 列表。")}
             </p>
           </div>
 
