@@ -69,6 +69,19 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           ))}
         </div>
       </section>
+
+      <section className="content-wrap pt-12 sm:pt-16">
+        <div className="glass-panel rounded-[2rem] p-6 sm:p-8">
+          <p className="section-label">继续深入聊一聊</p>
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+            如果有心仪房源想继续深入聊天
+          </h2>
+          <p className="mt-3 text-base leading-7 text-slate-600">
+            欢迎直接添加微信：
+            <span className="ml-2 font-semibold tracking-wide text-slate-950">UOLOinxx</span>
+          </p>
+        </div>
+      </section>
     </main>
   );
 }

@@ -42,6 +42,7 @@ model Listing {
   isFurnished   Boolean    @default(false)
   petPolicy     PetPolicy
   imageUrls     String[]
+  videoUrls     String[]   @default([])
   description   String     @db.Text
   transitInfo   String?
   createdAt     DateTime   @default(now())

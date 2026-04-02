@@ -105,6 +105,33 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         </div>
       </section>
 
+      {listing.videoUrls.length ? (
+        <section className="content-wrap pt-10">
+          <div className="glass-panel rounded-[2rem] p-5 sm:p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-500">视频看房</p>
+                <h2 className="mt-1 text-2xl font-semibold text-slate-950">更直观地感受空间与动线</h2>
+              </div>
+              <p className="hidden text-sm text-slate-500 sm:block">{listing.videoUrls.length} 段视频</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {listing.videoUrls.map((videoUrl, index) => (
+                <div key={`${listing.slug}-video-${index}`} className="overflow-hidden rounded-[1.5rem] bg-slate-950">
+                  <video
+                    src={videoUrl}
+                    controls
+                    playsInline
+                    className="h-full min-h-[240px] w-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <section className="content-wrap pt-10">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {infoCards.map((item) => {

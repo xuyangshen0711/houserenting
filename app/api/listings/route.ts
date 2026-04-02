@@ -39,6 +39,7 @@ export async function POST(request: Request) {
         isFurnished: Boolean(body.isFurnished),
         petPolicy: body.petPolicy,
         imageUrls: body.imageUrls,
+        videoUrls: body.videoUrls ?? [],
         description: body.description,
         transitInfo: body.transitInfo
       }

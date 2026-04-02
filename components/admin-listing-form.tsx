@@ -15,7 +15,8 @@ const initialState = {
   description: "",
   hasBrokerFee: false,
   isFurnished: true,
-  imageUrls: [] as string[]
+  imageUrls: [] as string[],
+  videoUrls: [] as string[]
 };
 
 export function AdminListingForm() {
@@ -206,10 +207,26 @@ export function AdminListingForm() {
         />
       </div>
 
+      <div className="mt-5">
+        <CloudinaryUploader
+          assetType="video"
+          label="上传房源视频"
+          description="支持多段视频上传。会直接发送到 Cloudinary，并返回视频 URL 列表。"
+          buttonLabel="选择视频"
+          value={form.videoUrls}
+          onChange={(nextValue) => updateField("videoUrls", nextValue)}
+        />
+      </div>
+
       <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-slate-500">
-          当前已上传 <span className="font-semibold text-slate-900">{form.imageUrls.length}</span> 张图片
-        </p>
+        <div className="text-sm text-slate-500">
+          <p>
+            当前已上传 <span className="font-semibold text-slate-900">{form.imageUrls.length}</span> 张图片
+          </p>
+          <p className="mt-1">
+            当前已上传 <span className="font-semibold text-slate-900">{form.videoUrls.length}</span> 段视频
+          </p>
+        </div>
 
         <div className="flex items-center gap-3">
           {status ? <p className="text-sm text-slate-600">{status}</p> : null}

@@ -7,9 +7,20 @@ import { useRef, useState, useTransition } from "react";
 type CloudinaryUploaderProps = {
   value: string[];
   onChange: (nextValue: string[]) => void;
+  assetType?: "image" | "video";
+  label?: string;
+  description?: string;
+  buttonLabel?: string;
 };
 
-export function CloudinaryUploader({ value, onChange }: CloudinaryUploaderProps) {
+export function CloudinaryUploader({
+  value,
+  onChange,
+  assetType = "image",
+  label,
+  description,
+  buttonLabel
+}: CloudinaryUploaderProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -17,7 +28,11 @@ export function CloudinaryUploader({ value, onChange }: CloudinaryUploaderProps)
   async function uploadFiles(files: FileList) {
     try {
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+      const uploadPreset =
+        assetType === "video"
+          ? process.env.NEXT_PUBLIC_CLOUDINARY_VIDEO_UPLOAD_PRESET ??
+            process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+          : process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
       if (!cloudName || !uploadPreset) {
         setError("请先配置 Cloudinary 的公开环境变量。");
@@ -33,7 +48,7 @@ export function CloudinaryUploader({ value, onChange }: CloudinaryUploaderProps)
         formData.append("upload_preset", uploadPreset);
 
         const response = await fetch(
-          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          `https://api.cloudinary.com/v1_1/${cloudName}/${assetType}/upload`,
           {
             method: "POST",
             body: formData
@@ -74,9 +89,14 @@ export function CloudinaryUploader({ value, onChange }: CloudinaryUploaderProps)
       <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-white/70 p-5">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-800">上传高清房源图片</p>
+            <p className="text-sm font-medium text-slate-800">
+              {label ?? (assetType === "video" ? "上传房源视频" : "上传高清房源图片")}
+            </p>
             <p className="mt-1 text-sm leading-6 text-slate-500">
-              支持多图上传。组件会将图片直接发送到 Cloudinary，并返回 URL 列表。
+              {description ??
+                (assetType === "video"
+                  ? "支持多段视频上传。组件会将视频直接发送到 Cloudinary，并返回 URL 列表。"
+                  : "支持多图上传。组件会将图片直接发送到 Cloudinary，并返回 URL 列表。")}
             </p>
           </div>
 
@@ -86,7 +106,7 @@ export function CloudinaryUploader({ value, onChange }: CloudinaryUploaderProps)
             className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white"
           >
             {isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
-            选择图片
+            {buttonLabel ?? (assetType === "video" ? "选择视频" : "选择图片")}
           </button>
         </div>
 
@@ -94,7 +114,7 @@ export function CloudinaryUploader({ value, onChange }: CloudinaryUploaderProps)
           ref={inputRef}
           type="file"
           multiple
-          accept="image/*"
+          accept={assetType === "video" ? "video/*" : "image/*"}
           className="hidden"
           onChange={(event) => handleUpload(event.target.files)}
         />
@@ -107,7 +127,16 @@ export function CloudinaryUploader({ value, onChange }: CloudinaryUploaderProps)
           {value.map((url) => (
             <div key={url} className="glass-panel group relative overflow-hidden rounded-[1.5rem] p-2">
               <div className="relative h-44 overflow-hidden rounded-[1rem]">
-                <Image src={url} alt="房源图片预览" fill className="object-cover" sizes="33vw" />
+                {assetType === "image" ? (
+                  <Image src={url} alt="房源图片预览" fill className="object-cover" sizes="33vw" />
+                ) : (
+                  <video
+                    src={url}
+                    controls
+                    playsInline
+                    className="h-full w-full rounded-[1rem] object-cover"
+                  />
+                )}
               </div>
               <button
                 type="button"
