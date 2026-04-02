@@ -74,8 +74,8 @@ export function CloudinaryUploader({
             <p className="mt-1 text-sm leading-6 text-slate-500">
               {description ??
                 (assetType === "video"
-                  ? "支持多段视频上传。组件会将视频直接保存到本地磁盘，并返回 URL 列表。"
-                  : "支持多图上传。组件会将图片直接保存到本地磁盘，并返回 URL 列表。")}
+                  ? "支持多段视频上传。组件会将视频发送到 Cloudinary，并返回 URL 列表。"
+                  : "支持多图上传。组件会将图片发送到 Cloudinary，并返回 URL 列表。")}
             </p>
           </div>
 
