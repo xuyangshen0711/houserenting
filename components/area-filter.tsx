@@ -16,7 +16,11 @@ export function AreaFilter({ areas, selectedArea }: AreaFilterProps) {
           const isActive = selectedArea === area;
 
           return (
-            <Link key={area} href={area === "全部" ? "/" : `/?area=${encodeURIComponent(area)}`}>
+            <Link
+              key={area}
+              href={area === "全部" ? "/" : `/?area=${encodeURIComponent(area)}`}
+              scroll={false}
+            >
               <motion.span
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
