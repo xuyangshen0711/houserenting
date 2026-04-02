@@ -3,6 +3,49 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createAdminSessionValue } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
+import type { AdminListingRecord } from "@/lib/listing-view-model";
+
+function toAdminListingRecord(listing: {
+  id: string;
+  slug: string;
+  title: string;
+  monthlyRent: number;
+  address: string;
+  area: AdminListingRecord["area"];
+  nearbySchools: string[];
+  layout: AdminListingRecord["layout"];
+  hasBrokerFee: boolean;
+  isFurnished: boolean;
+  isPublished: boolean;
+  petPolicy: AdminListingRecord["petPolicy"];
+  imageUrls: string[];
+  videoUrls: string[];
+  description: string;
+  transitInfo: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}): AdminListingRecord {
+  return {
+    id: listing.id,
+    slug: listing.slug,
+    title: listing.title,
+    monthlyRent: listing.monthlyRent,
+    address: listing.address,
+    area: listing.area,
+    nearbySchools: listing.nearbySchools,
+    layout: listing.layout,
+    hasBrokerFee: listing.hasBrokerFee,
+    isFurnished: listing.isFurnished,
+    isPublished: listing.isPublished,
+    petPolicy: listing.petPolicy,
+    imageUrls: listing.imageUrls,
+    videoUrls: listing.videoUrls,
+    description: listing.description,
+    transitInfo: listing.transitInfo ?? "",
+    createdAt: listing.createdAt.toISOString(),
+    updatedAt: listing.updatedAt.toISOString()
+  };
+}
 
 export async function POST(request: Request) {
   const cookieStore = await cookies();
@@ -27,6 +70,16 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
+
+    if (!Array.isArray(body.imageUrls) || body.imageUrls.length === 0) {
+      return NextResponse.json(
+        {
+          message: "请至少上传 1 张房源图片。"
+        },
+        { status: 400 }
+      );
+    }
+
     const listing = await prisma.listing.create({
       data: {
         slug: body.slug,
@@ -34,9 +87,11 @@ export async function POST(request: Request) {
         monthlyRent: Number(body.monthlyRent),
         address: body.address,
         area: body.area,
+        nearbySchools: body.nearbySchools ?? [],
         layout: body.layout,
         hasBrokerFee: Boolean(body.hasBrokerFee),
         isFurnished: Boolean(body.isFurnished),
+        isPublished: body.isPublished ?? true,
         petPolicy: body.petPolicy,
         imageUrls: body.imageUrls,
         videoUrls: body.videoUrls ?? [],
@@ -50,7 +105,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       message: "房源已成功写入数据库。",
-      listing
+      listing: toAdminListingRecord(listing)
     });
   } catch (error) {
     return NextResponse.json(

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import type { ListingViewModel } from "@/lib/mock-listings";
+import type { ListingViewModel } from "@/lib/listing-view-model";
 
 type ListingCardProps = {
   listing: ListingViewModel;

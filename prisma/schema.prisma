@@ -40,7 +40,9 @@ model Listing {
   layout        LayoutType
   hasBrokerFee  Boolean    @default(false)
   isFurnished   Boolean    @default(false)
+  isPublished   Boolean    @default(true)
   petPolicy     PetPolicy
+  nearbySchools String[]   @default([])
   imageUrls     String[]
   videoUrls     String[]   @default([])
   description   String     @db.Text

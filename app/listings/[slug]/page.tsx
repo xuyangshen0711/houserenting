@@ -12,7 +12,7 @@ type ListingDetailPageProps = {
 
 export default async function ListingDetailPage({ params }: ListingDetailPageProps) {
   const { slug } = await params;
-  const listing = getListingBySlug(slug);
+  const listing = await getListingBySlug(slug);
 
   if (!listing) {
     notFound();

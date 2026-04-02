@@ -1,48 +1,163 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CloudinaryUploader } from "@/components/cloudinary-uploader";
+import type { AdminListingRecord } from "@/lib/listing-view-model";
 
-const initialState = {
+type AdminListingFormState = {
+  title: string;
+  slug: string;
+  monthlyRent: string;
+  address: string;
+  area: string;
+  nearbySchools: string[];
+  layout: string;
+  petPolicy: string;
+  transitInfo: string;
+  description: string;
+  hasBrokerFee: boolean;
+  isFurnished: boolean;
+  isPublished: boolean;
+  imageUrls: string[];
+  videoUrls: string[];
+};
+
+type AdminListingFormProps = {
+  initialData?: AdminListingRecord | null;
+  onSuccess?: (listing: AdminListingRecord, mode: "create" | "edit") => void;
+  onCancelEdit?: () => void;
+};
+
+const initialState: AdminListingFormState = {
   title: "",
   slug: "",
   monthlyRent: "",
   address: "",
   area: "BACK_BAY",
+  nearbySchools: [],
   layout: "ONE_BED_ONE_BATH",
   petPolicy: "OPEN",
   transitInfo: "",
   description: "",
   hasBrokerFee: false,
   isFurnished: true,
-  imageUrls: [] as string[],
-  videoUrls: [] as string[]
+  isPublished: true,
+  imageUrls: [],
+  videoUrls: []
 };
 
-export function AdminListingForm() {
-  const [form, setForm] = useState(initialState);
+function getFormStateFromListing(listing: AdminListingRecord): AdminListingFormState {
+  return {
+    title: listing.title,
+    slug: listing.slug,
+    monthlyRent: String(listing.monthlyRent),
+    address: listing.address,
+    area: listing.area,
+    nearbySchools: listing.nearbySchools,
+    layout: listing.layout,
+    petPolicy: listing.petPolicy,
+    transitInfo: listing.transitInfo,
+    description: listing.description,
+    hasBrokerFee: listing.hasBrokerFee,
+    isFurnished: listing.isFurnished,
+    isPublished: listing.isPublished,
+    imageUrls: listing.imageUrls,
+    videoUrls: listing.videoUrls
+  };
+}
+
+export function AdminListingForm({
+  initialData,
+  onSuccess,
+  onCancelEdit
+}: AdminListingFormProps) {
+  const [form, setForm] = useState<AdminListingFormState>(initialState);
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const schoolOptions = [
+    { value: "Boston University", label: "Boston University (BU)" },
+    { value: "Northeastern University", label: "Northeastern University" },
+    { value: "Harvard University", label: "Harvard University" },
+    {
+      value: "Massachusetts Institute of Technology",
+      label: "Massachusetts Institute of Technology (MIT)"
+    },
+    { value: "Tufts University", label: "Tufts University" },
+    { value: "Boston College", label: "Boston College (BC)" },
+    { value: "Emerson College", label: "Emerson College" },
+    { value: "Suffolk University", label: "Suffolk University" },
+    {
+      value: "University of Massachusetts Boston",
+      label: "University of Massachusetts Boston"
+    },
+    {
+      value: "Massachusetts College of Art and Design",
+      label: "Massachusetts College of Art and Design"
+    },
+    {
+      value: "Wentworth Institute of Technology",
+      label: "Wentworth Institute of Technology"
+    },
+    { value: "Wheelock College", label: "Wheelock College（已并入 BU）" },
+    { value: "Berklee College of Music", label: "Berklee College of Music" },
+    { value: "New England Conservatory", label: "New England Conservatory" },
+    { value: "Lesley University", label: "Lesley University" },
+    { value: "Cambridge College", label: "Cambridge College" },
+    { value: "Babson College", label: "Babson College" },
+    { value: "Brandeis University", label: "Brandeis University" },
+    {
+      value: "School of the Museum of Fine Arts at Tufts",
+      label: "School of the Museum of Fine Arts at Tufts"
+    },
+    {
+      value: "Boston Architectural College",
+      label: "Boston Architectural College"
+    }
+  ];
 
-  function updateField<Key extends keyof typeof initialState>(key: Key, value: (typeof initialState)[Key]) {
+  useEffect(() => {
+    if (initialData) {
+      setForm(getFormStateFromListing(initialData));
+      setStatus("");
+      return;
+    }
+
+    setForm(initialState);
+    setStatus("");
+  }, [initialData]);
+
+  function updateField<Key extends keyof AdminListingFormState>(
+    key: Key,
+    value: AdminListingFormState[Key]
+  ) {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("");
+
+    if (!form.imageUrls.length) {
+      setStatus("请至少上传 1 张主图后再保存房源。");
+      return;
+    }
+
     setIsSubmitting(true);
 
+    const payload = {
+      ...form,
+      monthlyRent: Number(form.monthlyRent)
+    };
+
     try {
-      const response = await fetch("/api/listings", {
-        method: "POST",
+      const endpoint = initialData ? `/api/listings/${initialData.id}` : "/api/listings";
+      const method = initialData ? "PATCH" : "POST";
+      const response = await fetch(endpoint, {
+        method,
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          ...form,
-          monthlyRent: Number(form.monthlyRent)
-        })
+        body: JSON.stringify(payload)
       });
 
       const result = await response.json();
@@ -51,8 +166,12 @@ export function AdminListingForm() {
         throw new Error(result.message ?? "提交失败");
       }
 
-      setStatus("房源已提交成功。");
-      setForm(initialState);
+      const mode = initialData ? "edit" : "create";
+      setStatus(mode === "create" ? "房源已提交成功。" : "房源已更新。");
+      if (!initialData) {
+        setForm(initialState);
+      }
+      onSuccess?.(result.listing, mode);
     } catch (submitError) {
       setStatus(submitError instanceof Error ? submitError.message : "提交失败");
     } finally {
@@ -126,6 +245,44 @@ export function AdminListingForm() {
           </select>
         </label>
 
+        <div className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-700">附近大学</span>
+          <div className="rounded-[1.5rem] border border-slate-200 bg-white/85 p-4">
+            <div className="flex flex-wrap gap-3">
+              {schoolOptions.map((school) => {
+                const checked = form.nearbySchools.includes(school.value);
+
+                return (
+                  <label
+                    key={school.value}
+                    className={[
+                      "inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-sm transition",
+                      checked
+                        ? "bg-slate-950 text-white"
+                        : "border border-slate-200 bg-white text-slate-700"
+                    ].join(" ")}
+                  >
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={checked}
+                      onChange={(event) =>
+                        updateField(
+                          "nearbySchools",
+                          event.target.checked
+                            ? [...form.nearbySchools, school.value]
+                            : form.nearbySchools.filter((item) => item !== school.value)
+                        )
+                      }
+                    />
+                    <span>{school.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-slate-700">房型</span>
           <select
@@ -164,7 +321,7 @@ export function AdminListingForm() {
         </label>
       </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      <div className="mt-5 grid gap-4 sm:grid-cols-3">
         <label className="flex items-center justify-between rounded-[1.5rem] border border-slate-200 bg-white/70 px-4 py-4">
           <span className="text-sm font-medium text-slate-700">是否有中介费</span>
           <input
@@ -181,6 +338,16 @@ export function AdminListingForm() {
             type="checkbox"
             checked={form.isFurnished}
             onChange={(event) => updateField("isFurnished", event.target.checked)}
+            className="h-4 w-4"
+          />
+        </label>
+
+        <label className="flex items-center justify-between rounded-[1.5rem] border border-slate-200 bg-white/70 px-4 py-4">
+          <span className="text-sm font-medium text-slate-700">保存后立即上架</span>
+          <input
+            type="checkbox"
+            checked={form.isPublished}
+            onChange={(event) => updateField("isPublished", event.target.checked)}
             className="h-4 w-4"
           />
         </label>
@@ -228,14 +395,23 @@ export function AdminListingForm() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {status ? <p className="text-sm text-slate-600">{status}</p> : null}
+          {initialData ? (
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="rounded-full border border-slate-200 bg-white/80 px-5 py-3 text-sm font-medium text-slate-700"
+            >
+              取消编辑
+            </button>
+          ) : null}
           <button
             type="submit"
             disabled={isSubmitting}
             className="rounded-full bg-slate-950 px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? "提交中..." : "保存房源"}
+            {isSubmitting ? "提交中..." : initialData ? "更新房源" : "保存房源"}
           </button>
         </div>
       </div>

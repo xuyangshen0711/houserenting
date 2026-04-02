@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
-import { AdminListingForm } from "@/components/admin-listing-form";
+import { AdminDashboard } from "@/components/admin-dashboard";
 import { unlockAdmin } from "@/app/admin/actions";
 import { createAdminSessionValue } from "@/lib/admin";
+import { getAdminListings } from "@/lib/listings";
 
 type AdminPageProps = {
   searchParams?: Promise<{
@@ -14,6 +15,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const cookieStore = await cookies();
   const isAuthed =
     cookieStore.get("boston-nest-admin")?.value === createAdminSessionValue();
+  const databaseReady = Boolean(process.env.DATABASE_URL);
 
   if (!isAuthed) {
     return (
@@ -55,23 +57,24 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     );
   }
 
+  const listings = await getAdminListings();
+
   return (
     <main className="page-shell pb-20">
       <section className="content-wrap pt-10">
-        <div className="max-w-3xl">
-          <p className="section-label">后台录入</p>
+        <div className="max-w-4xl">
+          <p className="section-label">后台管理</p>
           <h1 className="mt-5 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-            录入一套值得被认真展示的房源
+            录入、编辑、上下架和删除你的房源
           </h1>
           <p className="mt-4 text-base leading-7 text-slate-600">
-            这里是你的私密后台。上传图片后会自动推送到 Cloudinary，再把返回的 URL
-            一起写入数据库，方便首页和详情页统一使用。
+            这里是你的私密后台。你可以新增房源，也可以管理已经发布过的内容。所有修改都会优先以数据库中的真实房源为准。
           </p>
         </div>
       </section>
 
       <section className="content-wrap pt-10">
-        <AdminListingForm />
+        <AdminDashboard initialListings={listings} databaseReady={databaseReady} />
       </section>
     </main>
   );

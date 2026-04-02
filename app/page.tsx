@@ -1,18 +1,50 @@
-import { AreaFilter } from "@/components/area-filter";
+import { HomeFilters } from "@/components/home-filters";
 import { ListingCard } from "@/components/listing-card";
-import { getFeaturedListings, getUniqueAreas } from "@/lib/listings";
+import {
+  getFeaturedListings,
+  getUniqueAreas,
+  getUniqueSchools
+} from "@/lib/listings";
+import { getSchoolDisplayLabel, type RentSortValue } from "@/lib/listing-view-model";
 
 type HomePageProps = {
   searchParams?: Promise<{
     area?: string;
+    school?: string;
+    sort?: RentSortValue;
+    minRent?: string;
+    maxRent?: string;
   }>;
 };
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = (await searchParams) ?? {};
   const selectedArea = params.area ?? "全部";
-  const listings = getFeaturedListings(selectedArea);
-  const areas = getUniqueAreas();
+  const selectedSchool = params.school ?? "全部";
+  const selectedSort = params.sort ?? "default";
+  const minRent = params.minRent ?? "";
+  const maxRent = params.maxRent ?? "";
+  const parsedMinRent = minRent ? Number(minRent) : undefined;
+  const parsedMaxRent = maxRent ? Number(maxRent) : undefined;
+  const listings = await getFeaturedListings(
+    selectedArea,
+    selectedSchool,
+    selectedSort,
+    Number.isFinite(parsedMinRent) ? parsedMinRent : undefined,
+    Number.isFinite(parsedMaxRent) ? parsedMaxRent : undefined
+  );
+  const areas = await getUniqueAreas();
+  const schools = await getUniqueSchools();
+  const rentSummary =
+    selectedSort === "rent_asc"
+      ? "低到高"
+      : selectedSort === "rent_desc"
+        ? "高到低"
+        : "默认";
+  const budgetSummary =
+    minRent || maxRent
+      ? `${minRent || "不限"} - ${maxRent || "不限"}`
+      : "未设置预算";
 
   return (
     <main className="page-shell pb-20">
@@ -35,39 +67,71 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          <div className="glass-panel rounded-[2rem] p-5">
-            <p className="text-sm text-slate-500">精选区域</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-950">Back Bay · Malden · Everett</p>
-          </div>
-          <div className="glass-panel rounded-[2rem] p-5">
-            <p className="text-sm text-slate-500">房源风格</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-950">通勤友好，采光优秀，配置完整</p>
-          </div>
-          <div className="rounded-[2rem] bg-slate-950 px-5 py-6 text-white shadow-float">
-            <p className="text-sm text-white/70">体验目标</p>
-            <p className="mt-2 text-2xl font-semibold">像逛 Apple 官网一样看房</p>
-          </div>
+          <a href="#area-section" className="glass-panel block rounded-[2rem] p-5 transition hover:scale-[1.01]">
+            <p className="text-sm text-slate-500">地区分类</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950">
+              {selectedArea === "全部" ? "Back Bay · Malden · Everett" : selectedArea}
+            </p>
+          </a>
+          <a href="#school-section" className="glass-panel block rounded-[2rem] p-5 transition hover:scale-[1.01]">
+            <p className="text-sm text-slate-500">大学分类</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950">
+              {selectedSchool === "全部"
+                ? "BU · NEU · Harvard"
+                : `${getSchoolDisplayLabel(selectedSchool)} 附近推荐`}
+            </p>
+          </a>
+          <a
+            href="#rent-section"
+            className="glass-panel block rounded-[2rem] px-5 py-6 transition hover:scale-[1.01]"
+          >
+            <p className="text-sm text-slate-500">房租分类</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950">
+              {rentSummary === "默认" ? "客户可自选升序或降序" : `当前按房租${rentSummary}排列`}
+            </p>
+          </a>
         </div>
       </section>
 
       <section className="content-wrap pt-14 sm:pt-20">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <span className="section-label">区域筛选</span>
-            <h2 className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">用更轻松的方式，缩小你的选择范围</h2>
+            <span className="section-label">三类筛选</span>
+            <h2 className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">
+              先看地区，再看学校，最后按房租排序
+            </h2>
           </div>
-          <p className="hidden text-sm text-slate-500 sm:block">当前：{selectedArea}</p>
+          <p className="hidden text-sm text-slate-500 sm:block">
+            当前：{selectedArea} · {selectedSchool} · {rentSummary} · {budgetSummary}
+          </p>
         </div>
 
-        <AreaFilter areas={areas} selectedArea={selectedArea} />
+        <HomeFilters
+          areas={areas}
+          schools={schools}
+          selectedArea={selectedArea}
+          selectedSchool={selectedSchool}
+          selectedSort={selectedSort}
+          minRent={minRent}
+          maxRent={maxRent}
+        />
       </section>
 
       <section className="content-wrap pt-10">
-        <div className="grid auto-rows-[320px] grid-cols-1 gap-5 md:grid-cols-6">
-          {listings.map((listing, index) => (
-            <ListingCard key={listing.slug} listing={listing} index={index} />
-          ))}
-        </div>
+        {listings.length ? (
+          <div className="grid auto-rows-[320px] grid-cols-1 gap-5 md:grid-cols-6">
+            {listings.map((listing, index) => (
+              <ListingCard key={listing.slug} listing={listing} index={index} />
+            ))}
+          </div>
+        ) : (
+          <div className="glass-panel rounded-[2rem] p-8 text-center">
+            <p className="text-lg font-semibold text-slate-950">这个区域暂时还没有已发布房源</p>
+            <p className="mt-3 text-sm leading-6 text-slate-500">
+              你可以切换其他区域看看，或者稍后再回来刷新。后台新增并上架后，这里会自动出现。
+            </p>
+          </div>
+        )}
       </section>
 
       <section className="content-wrap pt-12 sm:pt-16">
