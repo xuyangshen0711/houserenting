@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PencilLine, Power, Trash2, LayoutDashboard } from "lucide-react";
 import { AdminListingForm } from "@/components/admin-listing-form";
@@ -31,22 +32,22 @@ export function AdminDashboard({
 
   const summary = useMemo(() => {
     const published = listings.filter((listing) => listing.isPublished).length;
+    const missingImages = listings.filter((listing) => listing.imageUrls.length === 0).length;
     return {
       total: listings.length,
       published,
-      hidden: listings.length - published
+      hidden: listings.length - published,
+      missingImages
     };
   }, [listings]);
 
+  const incompleteListings = useMemo(
+    () => listings.filter((listing) => listing.imageUrls.length === 0),
+    [listings]
+  );
+
   async function fetchUpdatedProperty(id: string) {
-    try {
-      const res = await fetch(`/api/listings`);
-      if (res.ok) {
-         // Optionally refresh the full list from API. For now we will just instruct the user it's synced.
-         // Actually better to just refresh the page entirely for simplicity:
-         window.location.reload();
-      }
-    } catch(e) {}
+    window.location.reload();
   }
 
   async function handleDelete(id: string) {
@@ -143,6 +144,48 @@ export function AdminDashboard({
           <p className="mt-2 text-3xl font-semibold text-slate-950">{summary.hidden}</p>
         </div>
       </div>
+
+      {incompleteListings.length ? (
+        <section className="rounded-[2rem] border border-amber-200 bg-amber-50/80 p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="section-label text-amber-700">待补全</p>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-amber-950">
+                还有 {summary.missingImages} 个房源缺少主图
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-amber-900/80">
+                这些房源已经在数据库里，但还不适合发布。点进编辑页上传主图后，图片链接会自动写回数据库。
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {incompleteListings.map((listing) => (
+              <div
+                key={`incomplete-${listing.id}`}
+                className="flex flex-col gap-3 rounded-[1.5rem] border border-amber-200 bg-white/80 p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="text-base font-semibold text-slate-950">{listing.name}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {getAreaLabel(listing.area)} · {listing.address}
+                  </p>
+                  <p className="mt-2 text-sm font-bold text-amber-700">
+                    ⚠️ 缺少主图，请点击上传
+                  </p>
+                </div>
+
+                <Link
+                  href={`/admin/listings/${listing.id}`}
+                  className="inline-flex items-center justify-center rounded-full bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
+                >
+                  去上传主图
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {!databaseReady ? (
         <div className="rounded-[2rem] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
@@ -266,6 +309,13 @@ export function AdminDashboard({
                       <PencilLine className="h-4 w-4" />
                       编辑大楼
                     </button>
+
+                    <Link
+                      href={`/admin/listings/${listing.id}`}
+                      className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100"
+                    >
+                      补主图
+                    </Link>
 
                     <button
                       type="button"

@@ -199,3 +199,46 @@ export async function getAdminListings(): Promise<AdminListingRecord[]> {
     return [];
   }
 }
+
+export async function getAdminListingById(id: string): Promise<AdminListingRecord | null> {
+  if (!canUseDatabase()) {
+    return null;
+  }
+
+  try {
+    const property = await prisma.property.findUnique({
+      where: { id },
+      include: {
+        floorPlans: true
+      }
+    });
+
+    if (!property) {
+      return null;
+    }
+
+    return {
+      id: property.id,
+      slug: property.slug,
+      name: property.name,
+      address: property.address,
+      area: property.area,
+      nearbySchools: property.nearbySchools,
+      acceptsUndergrad: property.acceptsUndergrad,
+      parkingFee: property.parkingFee,
+      hasBrokerFee: property.hasBrokerFee,
+      promotions: property.promotions,
+      petPolicy: property.petPolicy,
+      imageUrls: property.imageUrls,
+      videoUrls: property.videoUrls,
+      description: property.description,
+      transitInfo: property.transitInfo ?? "",
+      isPublished: property.isPublished,
+      createdAt: property.createdAt.toISOString(),
+      updatedAt: property.updatedAt.toISOString(),
+      floorPlans: property.floorPlans
+    };
+  } catch {
+    return null;
+  }
+}
