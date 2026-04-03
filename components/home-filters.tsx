@@ -21,6 +21,14 @@ type FilterItem = {
   label: string;
 };
 
+// Solid enough to be legible on any colored background
+const cardStyle: React.CSSProperties = {
+  border: "1px solid rgba(15, 23, 40, 0.08)",
+  background: "rgba(255, 255, 255, 0.82)",
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)"
+};
+
 function FilterPills({
   id,
   title,
@@ -37,30 +45,26 @@ function FilterPills({
   displayValue: string;
 }) {
   return (
-    <section
-      id={id}
-      className="scroll-mt-28 rounded-[2rem] border border-white/40 bg-white/40 p-6 backdrop-blur-xl"
-    >
+    <section id={id} className="scroll-mt-28 rounded-[2rem] p-6" style={cardStyle}>
       <div className="flex items-center justify-between gap-4">
-        <h3 className="text-xl font-semibold text-slate-950">{title}</h3>
-        <p className="text-sm text-slate-500">当前：{displayValue}</p>
+        <h3 className="text-xl font-bold tracking-tight text-slate-950">{title}</h3>
+        <p className="text-xs font-light tracking-wide text-slate-500">当前：{displayValue}</p>
       </div>
 
       <div className="scrollbar-hidden mt-6 overflow-x-auto pb-2">
         <div className="flex min-w-max gap-3">
           {items.map((item) => {
             const isActive = selectedValue === item.value;
-
             return (
               <Link key={item.value} href={getHref(item.value)} scroll={false}>
                 <motion.span
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
                   className={[
-                    "inline-flex rounded-full px-5 py-3 text-sm transition",
+                    "inline-flex rounded-full px-5 py-2.5 text-sm font-medium transition-shadow duration-200",
                     isActive
-                      ? "bg-slate-950 text-white shadow-float"
-                      : "border border-slate-200 bg-white text-slate-700"
+                      ? "bg-gradient-to-r from-violet-600 to-sky-500 text-white shadow-float"
+                      : "border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                   ].join(" ")}
                 >
                   {item.label}
@@ -99,7 +103,6 @@ export function HomeFilters({
     hash?: string
   ) {
     const params = new URLSearchParams(searchParams.toString());
-
     for (const [key, value] of Object.entries(nextValues)) {
       if (!value || value === "全部" || value === "default") {
         params.delete(key);
@@ -107,7 +110,6 @@ export function HomeFilters({
         params.set(key, value);
       }
     }
-
     const query = params.toString();
     const base = query ? `/?${query}` : "/";
     return hash ? `${base}${hash}` : base;
@@ -115,13 +117,7 @@ export function HomeFilters({
 
   function applyBudget() {
     router.push(
-      buildHref(
-        {
-          minRent: minBudget.trim(),
-          maxRent: maxBudget.trim()
-        },
-        "#rent-section"
-      ),
+      buildHref({ minRent: minBudget.trim(), maxRent: maxBudget.trim() }, "#rent-section"),
       { scroll: false }
     );
   }
@@ -130,13 +126,7 @@ export function HomeFilters({
     setMinBudget("");
     setMaxBudget("");
     router.push(
-      buildHref(
-        {
-          minRent: "",
-          maxRent: ""
-        },
-        "#rent-section"
-      ),
+      buildHref({ minRent: "", maxRent: "" }, "#rent-section"),
       { scroll: false }
     );
   }
@@ -155,28 +145,22 @@ export function HomeFilters({
       <FilterPills
         id="school-section"
         title="大学分类"
-        items={schools.map((school) => ({
-          value: school,
-          label: school
-        }))}
+        items={schools.map((school) => ({ value: school, label: school }))}
         selectedValue={selectedSchool}
         displayValue={selectedSchool === "全部" ? "全部" : selectedSchool}
         getHref={(school) => buildHref({ school }, "#school-section")}
       />
 
-      <section
-        id="rent-section"
-        className="scroll-mt-28 rounded-[2rem] border border-white/40 bg-white/40 p-6 backdrop-blur-xl"
-      >
+      <section id="rent-section" className="scroll-mt-28 rounded-[2rem] p-6" style={cardStyle}>
         <div className="flex items-center justify-between gap-4">
-          <h3 className="text-xl font-semibold text-slate-950">房租分类</h3>
-          <p className="text-sm text-slate-500">
+          <h3 className="text-xl font-bold tracking-tight text-slate-950">房租分类</h3>
+          <p className="text-xs font-light tracking-wide text-slate-500">
             当前：
             {selectedSort === "rent_asc"
-              ? " 房租从低到高"
+              ? "房租从低到高"
               : selectedSort === "rent_desc"
-                ? " 房租从高到低"
-                : " 默认排序"}
+                ? "房租从高到低"
+                : "默认排序"}
           </p>
         </div>
 
@@ -188,7 +172,6 @@ export function HomeFilters({
               { value: "rent_desc", label: "房租从高到低" }
             ].map((item) => {
               const isActive = selectedSort === item.value;
-
               return (
                 <Link
                   key={item.value}
@@ -196,13 +179,13 @@ export function HomeFilters({
                   scroll={false}
                 >
                   <motion.span
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.97 }}
                     className={[
-                      "inline-flex rounded-full px-5 py-3 text-sm transition",
+                      "inline-flex rounded-full px-5 py-2.5 text-sm font-medium transition-shadow duration-200",
                       isActive
-                        ? "bg-slate-950 text-white shadow-float"
-                        : "border border-slate-200 bg-white text-slate-700"
+                        ? "bg-gradient-to-r from-violet-600 to-sky-500 text-white shadow-float"
+                        : "border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                     ].join(" ")}
                   >
                     {item.label}
@@ -215,31 +198,31 @@ export function HomeFilters({
 
         <div className="mt-6 grid gap-4 md:grid-cols-[1fr_1fr_auto_auto]">
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-600">最低预算</span>
+            <span className="mb-2 block text-xs font-medium tracking-wide text-slate-600">最低预算</span>
             <input
               value={minBudget}
-              onChange={(event) => setMinBudget(event.target.value)}
+              onChange={(e) => setMinBudget(e.target.value)}
               inputMode="numeric"
               placeholder="例如 2200"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-400"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             />
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-600">最高预算</span>
+            <span className="mb-2 block text-xs font-medium tracking-wide text-slate-600">最高预算</span>
             <input
               value={maxBudget}
-              onChange={(event) => setMaxBudget(event.target.value)}
+              onChange={(e) => setMaxBudget(e.target.value)}
               inputMode="numeric"
               placeholder="例如 3800"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-400"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             />
           </label>
 
           <button
             type="button"
             onClick={applyBudget}
-            className="self-end rounded-2xl bg-slate-950 px-5 py-3 text-sm font-medium text-white"
+            className="self-end rounded-2xl bg-gradient-to-r from-violet-600 to-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-float transition duration-200 hover:scale-105 active:scale-[0.98]"
           >
             应用预算
           </button>
@@ -247,7 +230,7 @@ export function HomeFilters({
           <button
             type="button"
             onClick={resetBudget}
-            className="self-end rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700"
+            className="self-end rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition duration-200 hover:scale-105 hover:bg-slate-50 active:scale-[0.98]"
           >
             清除预算
           </button>
