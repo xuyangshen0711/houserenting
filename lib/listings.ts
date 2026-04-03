@@ -168,6 +168,9 @@ export async function getAdminListings(): Promise<AdminListingRecord[]> {
     const properties = await prisma.property.findMany({
       orderBy: {
         updatedAt: "desc"
+      },
+      include: {
+        floorPlans: true
       }
     });
 
@@ -180,6 +183,7 @@ export async function getAdminListings(): Promise<AdminListingRecord[]> {
       nearbySchools: property.nearbySchools,
       acceptsUndergrad: property.acceptsUndergrad,
       parkingFee: property.parkingFee,
+      hasBrokerFee: property.hasBrokerFee,
       promotions: property.promotions,
       petPolicy: property.petPolicy,
       imageUrls: property.imageUrls,
@@ -188,7 +192,8 @@ export async function getAdminListings(): Promise<AdminListingRecord[]> {
       transitInfo: property.transitInfo ?? "",
       isPublished: property.isPublished,
       createdAt: property.createdAt.toISOString(),
-      updatedAt: property.updatedAt.toISOString()
+      updatedAt: property.updatedAt.toISOString(),
+      floorPlans: property.floorPlans
     }));
   } catch {
     return [];

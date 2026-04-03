@@ -37,12 +37,12 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
     {
       icon: BedDouble,
       label: "房型",
-      value: listing.layoutLabel
+      value: listing.floorPlans.length > 0 ? Array.from(new Set(listing.floorPlans.map(fp => fp.layoutLabel))).join(", ") : "待定"
     },
     {
       icon: Sofa,
       label: "家具",
-      value: listing.isFurnished ? "可拎包入住" : "可自行配置"
+      value: listing.floorPlans.some(fp => fp.isFurnished) ? "部分包家具" : "可自行配置"
     },
     {
       icon: PawPrint,

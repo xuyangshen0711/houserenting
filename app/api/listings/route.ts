@@ -5,45 +5,46 @@ import { createAdminSessionValue } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import type { AdminListingRecord } from "@/lib/listing-view-model";
 
-function toAdminListingRecord(listing: {
+function toAdminListingRecord(property: {
   id: string;
   slug: string;
-  title: string;
-  monthlyRent: number;
+  name: string;
   address: string;
   area: AdminListingRecord["area"];
   nearbySchools: string[];
-  layout: AdminListingRecord["layout"];
-  hasBrokerFee: boolean;
-  isFurnished: boolean;
-  isPublished: boolean;
   petPolicy: AdminListingRecord["petPolicy"];
+  acceptsUndergrad: boolean;
+  parkingFee: number | null;
+  hasBrokerFee: boolean;
+  promotions: string | null;
   imageUrls: string[];
   videoUrls: string[];
   description: string;
   transitInfo: string | null;
+  isPublished: boolean;
   createdAt: Date;
   updatedAt: Date;
 }): AdminListingRecord {
   return {
-    id: listing.id,
-    slug: listing.slug,
-    title: listing.title,
-    monthlyRent: listing.monthlyRent,
-    address: listing.address,
-    area: listing.area,
-    nearbySchools: listing.nearbySchools,
-    layout: listing.layout,
-    hasBrokerFee: listing.hasBrokerFee,
-    isFurnished: listing.isFurnished,
-    isPublished: listing.isPublished,
-    petPolicy: listing.petPolicy,
-    imageUrls: listing.imageUrls,
-    videoUrls: listing.videoUrls,
-    description: listing.description,
-    transitInfo: listing.transitInfo ?? "",
-    createdAt: listing.createdAt.toISOString(),
-    updatedAt: listing.updatedAt.toISOString()
+    id: property.id,
+    slug: property.slug,
+    name: property.name,
+    address: property.address,
+    area: property.area,
+    nearbySchools: property.nearbySchools,
+    petPolicy: property.petPolicy,
+    acceptsUndergrad: property.acceptsUndergrad,
+    parkingFee: property.parkingFee,
+    hasBrokerFee: property.hasBrokerFee,
+    promotions: property.promotions,
+    imageUrls: property.imageUrls,
+    videoUrls: property.videoUrls,
+    description: property.description,
+    transitInfo: property.transitInfo ?? "",
+    isPublished: property.isPublished,
+    createdAt: property.createdAt.toISOString(),
+    updatedAt: property.updatedAt.toISOString(),
+    floorPlans: []
   };
 }
 
@@ -52,18 +53,14 @@ export async function POST(request: Request) {
 
   if (cookieStore.get("boston-nest-admin")?.value !== createAdminSessionValue()) {
     return NextResponse.json(
-      {
-        message: "未授权的请求，请先通过管理员后台登录。"
-      },
+      { message: "未授权的请求，请先通过管理员后台登录。" },
       { status: 401 }
     );
   }
 
   if (!process.env.DATABASE_URL) {
     return NextResponse.json(
-      {
-        message: "未检测到 DATABASE_URL，请先配置数据库环境变量。"
-      },
+      { message: "未检测到 DATABASE_URL，请先配置数据库环境变量。" },
       { status: 503 }
     );
   }
@@ -73,26 +70,24 @@ export async function POST(request: Request) {
 
     if (!Array.isArray(body.imageUrls) || body.imageUrls.length === 0) {
       return NextResponse.json(
-        {
-          message: "请至少上传 1 张房源图片。"
-        },
+        { message: "请至少为大楼上传 1 张全局展示图片。" },
         { status: 400 }
       );
     }
 
-    const listing = await prisma.listing.create({
+    const property = await prisma.property.create({
       data: {
         slug: body.slug,
-        title: body.title,
-        monthlyRent: Number(body.monthlyRent),
+        name: body.name,
         address: body.address,
         area: body.area,
         nearbySchools: body.nearbySchools ?? [],
-        layout: body.layout,
-        hasBrokerFee: Boolean(body.hasBrokerFee),
-        isFurnished: Boolean(body.isFurnished),
-        isPublished: body.isPublished ?? true,
         petPolicy: body.petPolicy,
+        acceptsUndergrad: Boolean(body.acceptsUndergrad ?? true),
+        parkingFee: body.parkingFee ? Number(body.parkingFee) : null,
+        hasBrokerFee: Boolean(body.hasBrokerFee),
+        promotions: body.promotions || null,
+        isPublished: body.isPublished ?? true,
         imageUrls: body.imageUrls,
         videoUrls: body.videoUrls ?? [],
         description: body.description,
@@ -101,16 +96,16 @@ export async function POST(request: Request) {
     });
 
     revalidatePath("/");
-    revalidatePath(`/listings/${listing.slug}`);
+    revalidatePath(`/listings/${property.slug}`);
 
     return NextResponse.json({
-      message: "房源已成功写入数据库。",
-      listing: toAdminListingRecord(listing)
+      message: "公寓已成功写入数据库。",
+      listing: toAdminListingRecord(property)
     });
   } catch (error) {
     return NextResponse.json(
       {
-        message: "保存房源时出现错误，请检查 Prisma 枚举值和数据库连接。",
+        message: "保存时出现错误，请检查表单字段和数据库。",
         error: error instanceof Error ? error.message : "Unknown error"
       },
       { status: 500 }

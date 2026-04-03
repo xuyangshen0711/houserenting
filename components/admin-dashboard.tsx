@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { PencilLine, Power, Trash2 } from "lucide-react";
+import { PencilLine, Power, Trash2, LayoutDashboard } from "lucide-react";
 import { AdminListingForm } from "@/components/admin-listing-form";
+import { AdminFloorPlanManager } from "@/components/admin-floorplan-manager";
 import {
   getAreaLabel,
   getLayoutLabel,
@@ -24,6 +25,7 @@ export function AdminDashboard({
   const [editingListing, setEditingListing] = useState<AdminListingRecord | null>(
     null
   );
+  const [managingFloorPlansFor, setManagingFloorPlansFor] = useState<AdminListingRecord | null>(null);
   const [status, setStatus] = useState("");
   const [pendingId, setPendingId] = useState("");
 
@@ -36,10 +38,21 @@ export function AdminDashboard({
     };
   }, [listings]);
 
+  async function fetchUpdatedProperty(id: string) {
+    try {
+      const res = await fetch(`/api/listings`);
+      if (res.ok) {
+         // Optionally refresh the full list from API. For now we will just instruct the user it's synced.
+         // Actually better to just refresh the page entirely for simplicity:
+         window.location.reload();
+      }
+    } catch(e) {}
+  }
+
   async function handleDelete(id: string) {
     const target = listings.find((listing) => listing.id === id);
 
-    if (!target || !window.confirm(`确定删除「${target.title}」吗？这个操作无法撤销。`)) {
+    if (!target || !window.confirm(`确定删除「${target.name}」吗？这个操作无法撤销。`)) {
       return;
     }
 
@@ -60,7 +73,7 @@ export function AdminDashboard({
       if (editingListing?.id === id) {
         setEditingListing(null);
       }
-      setStatus("房源已删除。");
+      setStatus("大楼已删除。");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "删除失败");
     } finally {
@@ -89,13 +102,13 @@ export function AdminDashboard({
       }
 
       setListings((current) =>
-        current.map((item) => (item.id === listing.id ? result.listing : item))
+        current.map((item) => (item.id === listing.id ? { ...item, isPublished: result.listing.isPublished } : item))
       );
       if (editingListing?.id === listing.id) {
         setEditingListing(result.listing);
       }
       setStatus(
-        result.listing.isPublished ? "房源已上架。" : "房源已下架，前台将不再显示。"
+        result.listing.isPublished ? "上架成功。" : "房源已下架，前台将不再显示。"
       );
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "更新状态失败");
@@ -104,19 +117,29 @@ export function AdminDashboard({
     }
   }
 
+  if (managingFloorPlansFor) {
+    return (
+       <AdminFloorPlanManager 
+          property={managingFloorPlansFor} 
+          onClose={() => setManagingFloorPlansFor(null)} 
+          onUpdate={() => fetchUpdatedProperty(managingFloorPlansFor.id)}
+       />
+    );
+  }
+
   return (
     <div className="space-y-10">
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="glass-panel rounded-[2rem] p-5">
-          <p className="text-sm text-slate-500">房源总数</p>
+          <p className="text-sm text-slate-500">大楼/公寓总数</p>
           <p className="mt-2 text-3xl font-semibold text-slate-950">{summary.total}</p>
         </div>
         <div className="glass-panel rounded-[2rem] p-5">
-          <p className="text-sm text-slate-500">已上架</p>
+          <p className="text-sm text-slate-500">已展示</p>
           <p className="mt-2 text-3xl font-semibold text-slate-950">{summary.published}</p>
         </div>
         <div className="glass-panel rounded-[2rem] p-5">
-          <p className="text-sm text-slate-500">未上架</p>
+          <p className="text-sm text-slate-500">未展示</p>
           <p className="mt-2 text-3xl font-semibold text-slate-950">{summary.hidden}</p>
         </div>
       </div>
@@ -130,12 +153,12 @@ export function AdminDashboard({
 
       <section>
         <div className="max-w-3xl">
-          <p className="section-label">{editingListing ? "编辑房源" : "新增房源"}</p>
+          <p className="section-label">{editingListing ? "编辑公寓" : "新增公寓"}</p>
           <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-            {editingListing ? `正在编辑：${editingListing.title}` : "录入一套新的精选房源"}
+            {editingListing ? `正在更新大楼基础信息：${editingListing.name}` : "新建一个公寓大楼"}
           </h2>
           <p className="mt-3 text-base leading-7 text-slate-600">
-            这里的保存会直接写入数据库。编辑后的变更会同步影响首页和详情页展示。
+            这里的保存会直接入库。新建完大楼后，你可以在下方的名录中点击“管理户型”来添加独立的户型。
           </p>
         </div>
 
@@ -152,7 +175,7 @@ export function AdminDashboard({
                 return current.map((item) => (item.id === listing.id ? listing : item));
               });
               setEditingListing(null);
-              setStatus(mode === "create" ? "房源已新增。" : "房源已更新。");
+              setStatus(mode === "create" ? "公寓已创建。请通过下方名录管理户型！" : "公寓更新成功。");
             }}
           />
         </div>
@@ -161,9 +184,9 @@ export function AdminDashboard({
       <section>
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="section-label">房源管理</p>
+            <p className="section-label">公寓管理</p>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-              已录入房源
+              已录入的公寓名录
             </h2>
           </div>
           {status ? <p className="text-sm text-slate-500">{status}</p> : null}
@@ -180,7 +203,7 @@ export function AdminDashboard({
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
                       <h3 className="text-2xl font-semibold text-slate-950">
-                        {listing.title}
+                        {listing.name}
                       </h3>
                       <span
                         className={[
@@ -190,16 +213,15 @@ export function AdminDashboard({
                             : "bg-slate-200 text-slate-700"
                         ].join(" ")}
                       >
-                        {listing.isPublished ? "已上架" : "未上架"}
+                        {listing.isPublished ? "已展示" : "未展示"}
                       </span>
                     </div>
 
                     <p className="mt-2 text-sm text-slate-500">
-                      {getAreaLabel(listing.area)} · {getLayoutLabel(listing.layout)} ·{" "}
-                      {listing.address}
+                      {getAreaLabel(listing.area)} · {listing.address}
                     </p>
-                    <p className="mt-3 text-lg font-semibold text-slate-950">
-                      US$ {listing.monthlyRent.toLocaleString()} / 月
+                    <p className="mt-3 text-sm font-medium text-slate-800">
+                      旗下户型: {listing.floorPlans?.length || 0} 个 · {listing.hasBrokerFee ? "有中介费" : "免中介费"} · {listing.acceptsUndergrad ? "接受本科生" : "不接受本科生"}
                     </p>
                     <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
                       {listing.description}
@@ -207,10 +229,7 @@ export function AdminDashboard({
 
                     <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
                       <span className="rounded-full bg-white/70 px-3 py-1">
-                        图片 {listing.imageUrls.length} 张
-                      </span>
-                      <span className="rounded-full bg-white/70 px-3 py-1">
-                        视频 {listing.videoUrls.length} 段
+                        大楼公区图片 {listing.imageUrls.length} 张
                       </span>
                       <span className="rounded-full bg-white/70 px-3 py-1">
                         {getPetPolicyLabel(listing.petPolicy)}
@@ -232,18 +251,27 @@ export function AdminDashboard({
                   <div className="flex flex-wrap items-center gap-3">
                     <button
                       type="button"
+                      onClick={() => setManagingFloorPlansFor(listing)}
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow"
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      管理户型
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => setEditingListing(listing)}
-                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700"
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                       <PencilLine className="h-4 w-4" />
-                      编辑
+                      编辑大楼
                     </button>
 
                     <button
                       type="button"
                       onClick={() => void handleTogglePublish(listing)}
                       disabled={pendingId === listing.id}
-                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-60 hover:bg-slate-50"
                     >
                       <Power className="h-4 w-4" />
                       {listing.isPublished ? "下架" : "上架"}
@@ -253,10 +281,10 @@ export function AdminDashboard({
                       type="button"
                       onClick={() => void handleDelete(listing.id)}
                       disabled={pendingId === listing.id}
-                      className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 text-red-600 px-4 py-2 text-sm font-medium disabled:opacity-60 hover:bg-red-100"
                     >
                       <Trash2 className="h-4 w-4" />
-                      删除
+                      删除整个大楼
                     </button>
                   </div>
                 </div>
@@ -266,7 +294,7 @@ export function AdminDashboard({
             <div className="glass-panel rounded-[2rem] p-8 text-center">
               <p className="text-lg font-semibold text-slate-950">还没有房源</p>
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                你可以先在上面的表单里新增第一套房源。保存成功后，这里会立即出现。
+                你可以先在上面的表单里新建一个公寓大楼。保存成功后，下方会列出大楼信息，点击“管理户型”即可录入具体房间。
               </p>
             </div>
           )}

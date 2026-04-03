@@ -1,5 +1,15 @@
 import { Area, LayoutType, PetPolicy } from "@prisma/client";
 
+export type FloorPlanSource = {
+  id: string;
+  name: string;
+  layout: LayoutType;
+  monthlyRent: number;
+  roomSizeSqFt: number | null;
+  isFurnished: boolean;
+  imageUrls: string[];
+};
+
 export type AdminListingRecord = {
   id: string;
   slug: string;
@@ -10,6 +20,7 @@ export type AdminListingRecord = {
   petPolicy: PetPolicy;
   acceptsUndergrad: boolean;
   parkingFee: number | null;
+  hasBrokerFee: boolean;
   promotions: string | null;
   imageUrls: string[];
   videoUrls: string[];
@@ -18,6 +29,7 @@ export type AdminListingRecord = {
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
+  floorPlans: FloorPlanSource[];
 };
 
 const areaLabelMap: Record<Area, string> = {
@@ -151,17 +163,6 @@ export function getSchoolDisplayLabel(school: string) {
   return schoolShortLabelMap[school] ?? school;
 }
 
-type FloorPlanSource = {
-  id: string;
-  name: string;
-  layout: LayoutType;
-  monthlyRent: number;
-  roomSizeSqFt: number | null;
-  hasBrokerFee: boolean;
-  isFurnished: boolean;
-  imageUrls: string[];
-};
-
 type ListingSource = {
   id: string;
   slug: string;
@@ -173,6 +174,7 @@ type ListingSource = {
   acceptsUndergrad: boolean;
   parkingFee: number | null;
   promotions: string | null;
+  hasBrokerFee: boolean;
   imageUrls: string[];
   videoUrls: string[];
   description: string;
@@ -187,7 +189,6 @@ export type FloorPlanViewModel = {
   layoutLabel: string;
   monthlyRent: number;
   roomSizeSqFt: number | null;
-  hasBrokerFee: boolean;
   isFurnished: boolean;
   imageUrls: string[];
 };
@@ -203,6 +204,7 @@ export type ListingViewModel = {
   petPolicyLabel: string;
   acceptsUndergrad: boolean;
   parkingFee: number | null;
+  hasBrokerFee: boolean;
   promotions: string | null;
   imageUrls: string[];
   videoUrls: string[];
@@ -220,7 +222,6 @@ export function mapToListingViewModel(property: ListingSource): ListingViewModel
     layoutLabel: getLayoutLabel(fp.layout),
     monthlyRent: fp.monthlyRent,
     roomSizeSqFt: fp.roomSizeSqFt,
-    hasBrokerFee: fp.hasBrokerFee,
     isFurnished: fp.isFurnished,
     imageUrls: fp.imageUrls
   }));
@@ -240,6 +241,7 @@ export function mapToListingViewModel(property: ListingSource): ListingViewModel
     petPolicyLabel: getPetPolicyLabel(property.petPolicy),
     acceptsUndergrad: property.acceptsUndergrad,
     parkingFee: property.parkingFee,
+    hasBrokerFee: property.hasBrokerFee,
     promotions: property.promotions,
     imageUrls: property.imageUrls,
     videoUrls: property.videoUrls,
