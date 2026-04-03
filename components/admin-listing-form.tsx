@@ -74,6 +74,8 @@ export function AdminListingForm({
   const [form, setForm] = useState<AdminListingFormState>(initialState);
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [smartText, setSmartText] = useState("");
+  const [isParsing, setIsParsing] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -90,6 +92,37 @@ export function AdminListingForm({
     value: AdminListingFormState[Key]
   ) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  async function handleSmartParse() {
+    if (!smartText.trim()) return;
+    setIsParsing(true);
+    setStatus("正在利用 AI 处理文案，请稍候...");
+    try {
+      const res = await fetch("/api/smart-parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: smartText })
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || "解析失败");
+
+      const aiData = result.data;
+      if (aiData.name) updateField("name", aiData.name);
+      if (aiData.address) updateField("address", aiData.address);
+      if (aiData.hasBrokerFee !== undefined) updateField("hasBrokerFee", aiData.hasBrokerFee);
+      if (aiData.acceptsUndergrad !== undefined) updateField("acceptsUndergrad", aiData.acceptsUndergrad);
+      if (aiData.description) updateField("description", aiData.description);
+      // Auto-generate basic slug if name is parsed natively
+      if (aiData.name) updateField("slug", aiData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
+
+      setStatus("AI 解析成功，已自动填充表格！");
+      setSmartText("");
+    } catch(err: any) {
+      setStatus(err.message);
+    } finally {
+      setIsParsing(false);
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -127,8 +160,34 @@ export function AdminListingForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="glass-panel p-5 sm:p-8 rounded-[2rem]">
+    <div className="space-y-6">
+      <div className="glass-panel p-5 sm:p-8 rounded-[2rem] bg-indigo-50/50 border-indigo-100">
+        <h3 className="text-lg font-bold mb-3 text-indigo-900 flex items-center gap-2">
+          ✨ 智能文案提取 (AI Smart Parse)
+        </h3>
+        <p className="text-sm text-indigo-700 mb-4">
+          直接将中介、各大官网或微信群的复杂招租文案粘贴于此，我们将利用大模型自动提取结构化数据填入下方表格。
+        </p>
+        <textarea
+           className="w-full rounded-2xl border border-indigo-200 bg-white px-4 py-3 outline-none min-h-[100px] text-sm focus:ring-2 focus:ring-indigo-500"
+           placeholder="粘贴大段文案，如：【波士顿市中心精装2B2B转租】无中介费，包水暖，带全套高档家具，出门1分钟地铁站，接受本科生。月租金 $3800，800 sq.ft..."
+           value={smartText}
+           onChange={(e) => setSmartText(e.target.value)}
+        />
+        <div className="flex justify-end mt-3">
+           <button 
+             type="button" 
+             onClick={() => void handleSmartParse()}
+             disabled={isParsing || !smartText.trim()}
+             className="bg-indigo-600 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+           >
+             {isParsing ? "魔法处理中..." : "开始智能解析并填入属性"}
+           </button>
+        </div>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="glass-panel p-5 sm:p-8 rounded-[2rem]">
         <h3 className="text-xl font-bold mb-4">基本信息 (Property)</h3>
         <div className="grid gap-5 md:grid-cols-2">
           <label className="block">
@@ -182,5 +241,6 @@ export function AdminListingForm({
          </div>
       </div>
     </form>
+    </div>
   );
 }

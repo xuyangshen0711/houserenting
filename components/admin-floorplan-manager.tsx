@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CloudinaryUploader } from "@/components/cloudinary-uploader";
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary-optimization";
 import type { AdminListingRecord, FloorPlanSource } from "@/lib/listing-view-model";
 
 type AdminFloorPlanManagerProps = {
@@ -168,7 +169,7 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
                     </div>
                     {fp.imageUrls.length > 0 ? (
                       <div className="w-full h-32 bg-slate-100 rounded-xl mb-4 overflow-hidden">
-                        <img src={fp.imageUrls[0]} alt="封面" className="w-full h-full object-cover" />
+                        <img src={optimizeCloudinaryUrl(fp.imageUrls[0], "c_fill,h_300,f_auto,q_auto")} alt="封面" className="w-full h-full object-cover" />
                       </div>
                     ) : (
                       <div className="w-full h-32 bg-slate-50 rounded-xl mb-4 flex items-center justify-center text-slate-400 text-xs border border-dashed border-slate-200">无图片</div>
