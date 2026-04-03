@@ -1,37 +1,16 @@
 import { Area, LayoutType, PetPolicy } from "@prisma/client";
 
-export type ListingViewModel = {
-  id: string;
-  slug: string;
-  title: string;
-  monthlyRent: number;
-  address: string;
-  area: string;
-  nearbySchools: string[];
-  layoutLabel: string;
-  hasBrokerFee: boolean;
-  isFurnished: boolean;
-  petPolicyLabel: string;
-  imageUrls: string[];
-  videoUrls: string[];
-  description: string;
-  transitInfo: string;
-  tagline: string;
-  isPublished: boolean;
-};
-
 export type AdminListingRecord = {
   id: string;
   slug: string;
-  title: string;
-  monthlyRent: number;
+  name: string;
   address: string;
   area: Area;
   nearbySchools: string[];
-  layout: LayoutType;
-  hasBrokerFee: boolean;
-  isFurnished: boolean;
   petPolicy: PetPolicy;
+  acceptsUndergrad: boolean;
+  parkingFee: number | null;
+  promotions: string | null;
   imageUrls: string[];
   videoUrls: string[];
   description: string;
@@ -172,43 +151,102 @@ export function getSchoolDisplayLabel(school: string) {
   return schoolShortLabelMap[school] ?? school;
 }
 
+type FloorPlanSource = {
+  id: string;
+  name: string;
+  layout: LayoutType;
+  monthlyRent: number;
+  roomSizeSqFt: number | null;
+  hasBrokerFee: boolean;
+  isFurnished: boolean;
+  imageUrls: string[];
+};
+
 type ListingSource = {
   id: string;
   slug: string;
-  title: string;
-  monthlyRent: number;
+  name: string;
   address: string;
   area: Area;
   nearbySchools: string[];
-  layout: LayoutType;
-  hasBrokerFee: boolean;
-  isFurnished: boolean;
   petPolicy: PetPolicy;
+  acceptsUndergrad: boolean;
+  parkingFee: number | null;
+  promotions: string | null;
   imageUrls: string[];
   videoUrls: string[];
   description: string;
   transitInfo: string | null;
   isPublished: boolean;
+  floorPlans: FloorPlanSource[];
 };
 
-export function mapToListingViewModel(listing: ListingSource): ListingViewModel {
+export type FloorPlanViewModel = {
+  id: string;
+  name: string;
+  layoutLabel: string;
+  monthlyRent: number;
+  roomSizeSqFt: number | null;
+  hasBrokerFee: boolean;
+  isFurnished: boolean;
+  imageUrls: string[];
+};
+
+export type ListingViewModel = {
+  id: string;
+  slug: string;
+  title: string;
+  monthlyRent: number; // min rent from floor plans
+  address: string;
+  area: string;
+  nearbySchools: string[];
+  petPolicyLabel: string;
+  acceptsUndergrad: boolean;
+  parkingFee: number | null;
+  promotions: string | null;
+  imageUrls: string[];
+  videoUrls: string[];
+  description: string;
+  transitInfo: string;
+  tagline: string;
+  isPublished: boolean;
+  floorPlans: FloorPlanViewModel[];
+};
+
+export function mapToListingViewModel(property: ListingSource): ListingViewModel {
+  const mappedFloorPlans = property.floorPlans.map((fp) => ({
+    id: fp.id,
+    name: fp.name,
+    layoutLabel: getLayoutLabel(fp.layout),
+    monthlyRent: fp.monthlyRent,
+    roomSizeSqFt: fp.roomSizeSqFt,
+    hasBrokerFee: fp.hasBrokerFee,
+    isFurnished: fp.isFurnished,
+    imageUrls: fp.imageUrls
+  }));
+
+  const minRent = mappedFloorPlans.length > 0 
+    ? Math.min(...mappedFloorPlans.map(fp => fp.monthlyRent))
+    : 0;
+
   return {
-    id: listing.id,
-    slug: listing.slug,
-    title: listing.title,
-    monthlyRent: listing.monthlyRent,
-    address: listing.address,
-    area: getAreaLabel(listing.area),
-    nearbySchools: listing.nearbySchools,
-    layoutLabel: getLayoutLabel(listing.layout),
-    hasBrokerFee: listing.hasBrokerFee,
-    isFurnished: listing.isFurnished,
-    petPolicyLabel: getPetPolicyLabel(listing.petPolicy),
-    imageUrls: listing.imageUrls,
-    videoUrls: listing.videoUrls,
-    description: listing.description,
-    transitInfo: listing.transitInfo ?? "交通信息待补充",
-    tagline: getTagline(listing.area),
-    isPublished: listing.isPublished
+    id: property.id,
+    slug: property.slug,
+    title: property.name,
+    monthlyRent: minRent,
+    address: property.address,
+    area: getAreaLabel(property.area),
+    nearbySchools: property.nearbySchools,
+    petPolicyLabel: getPetPolicyLabel(property.petPolicy),
+    acceptsUndergrad: property.acceptsUndergrad,
+    parkingFee: property.parkingFee,
+    promotions: property.promotions,
+    imageUrls: property.imageUrls,
+    videoUrls: property.videoUrls,
+    description: property.description,
+    transitInfo: property.transitInfo ?? "交通信息待补充",
+    tagline: getTagline(property.area),
+    isPublished: property.isPublished,
+    floorPlans: mappedFloorPlans
   };
 }
