@@ -4,26 +4,10 @@ import { prisma } from "@/lib/prisma";
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY!;
 
 const CATEGORIES = [
-  {
-    key: "chinese_restaurant",
-    label: "中餐厅",
-    keyword: "Chinese restaurant",
-  },
-  {
-    key: "chinese_supermarket",
-    label: "中超",
-    keyword: "Chinese supermarket Asian grocery",
-  },
-  {
-    key: "supermarket",
-    label: "超市",
-    keyword: "supermarket grocery store",
-  },
-  {
-    key: "fine_dining",
-    label: "高级餐厅",
-    keyword: "fine dining restaurant",
-  },
+  { key: "chinese_restaurant", label: "中餐厅", query: "Chinese restaurant" },
+  { key: "chinese_supermarket", label: "中超", query: "Chinese supermarket Asian grocery" },
+  { key: "supermarket", label: "超市", query: "supermarket grocery store" },
+  { key: "fine_dining", label: "高级餐厅", query: "fine dining restaurant" },
 ];
 
 async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
@@ -33,29 +17,55 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
   if (data.status === "OK" && data.results[0]) {
     return data.results[0].geometry.location;
   }
+  console.error("Geocode failed:", data.status, data.error_message);
   return null;
 }
 
-async function searchNearby(lat: number, lng: number, keyword: string) {
-  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=2000&keyword=${encodeURIComponent(keyword)}&key=${GOOGLE_API_KEY}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  if (data.status !== "OK") return [];
+// Uses new Places API (Text Search) — compatible with "Places API (New)"
+async function searchByText(lat: number, lng: number, query: string) {
+  const body = {
+    textQuery: query,
+    maxResultCount: 5,
+    locationBias: {
+      circle: {
+        center: { latitude: lat, longitude: lng },
+        radius: 3000,
+      },
+    },
+  };
 
-  return data.results.slice(0, 5).map((place: {
-    place_id: string;
-    name: string;
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": GOOGLE_API_KEY,
+      "X-Goog-FieldMask":
+        "places.id,places.displayName,places.rating,places.userRatingCount,places.formattedAddress,places.location",
+    },
+    body: JSON.stringify(body),
+  });
+
+  const data = await res.json();
+
+  if (!data.places) {
+    console.error("Places API error:", JSON.stringify(data));
+    return [];
+  }
+
+  return data.places.map((place: {
+    id: string;
+    displayName: { text: string };
     rating?: number;
-    user_ratings_total?: number;
-    vicinity?: string;
-    geometry: { location: { lat: number; lng: number } };
+    userRatingCount?: number;
+    formattedAddress?: string;
+    location: { latitude: number; longitude: number };
   }) => ({
-    placeId: place.place_id,
-    name: place.name,
+    placeId: place.id,
+    name: place.displayName.text,
     rating: place.rating ?? null,
-    reviewCount: place.user_ratings_total ?? 0,
-    vicinity: place.vicinity ?? "",
-    distanceKm: getDistanceKm(lat, lng, place.geometry.location.lat, place.geometry.location.lng),
+    reviewCount: place.userRatingCount ?? 0,
+    vicinity: place.formattedAddress ?? "",
+    distanceKm: getDistanceKm(lat, lng, place.location.latitude, place.location.longitude),
   }));
 }
 
@@ -71,6 +81,12 @@ function getDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
 }
 
+// Admin: clear all caches so they re-fetch
+export async function DELETE() {
+  await prisma.property.updateMany({ data: { nearbyPlacesCache: { set: null } } });
+  return NextResponse.json({ ok: true });
+}
+
 export async function GET(req: NextRequest) {
   const propertyId = req.nextUrl.searchParams.get("propertyId");
   if (!propertyId) return NextResponse.json({ error: "missing propertyId" }, { status: 400 });
@@ -78,8 +94,9 @@ export async function GET(req: NextRequest) {
   const property = await prisma.property.findUnique({ where: { id: propertyId } });
   if (!property) return NextResponse.json({ error: "not found" }, { status: 404 });
 
-  // Return cache if exists
-  if (property.nearbyPlacesCache) {
+  // Return cache if exists (skip if refresh=true)
+  const refresh = req.nextUrl.searchParams.get("refresh") === "true";
+  if (property.nearbyPlacesCache && !refresh) {
     return NextResponse.json(property.nearbyPlacesCache);
   }
 
@@ -99,7 +116,7 @@ export async function GET(req: NextRequest) {
     CATEGORIES.map(async (cat) => ({
       key: cat.key,
       label: cat.label,
-      places: await searchNearby(lat!, lng!, cat.keyword),
+      places: await searchByText(lat!, lng!, cat.query),
     }))
   );
 
