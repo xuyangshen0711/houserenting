@@ -7,7 +7,6 @@ import { AdminListingForm } from "@/components/admin-listing-form";
 import { AdminFloorPlanManager } from "@/components/admin-floorplan-manager";
 import {
   getAreaLabel,
-  getLayoutLabel,
   getPetPolicyLabel,
   getSchoolDisplayLabel,
   type AdminListingRecord
@@ -23,10 +22,8 @@ export function AdminDashboard({
   databaseReady
 }: AdminDashboardProps) {
   const [listings, setListings] = useState(initialListings);
-  const [editingListing, setEditingListing] = useState<AdminListingRecord | null>(
-    null
-  );
   const [managingFloorPlansFor, setManagingFloorPlansFor] = useState<AdminListingRecord | null>(null);
+  const [editingListingFull, setEditingListingFull] = useState<AdminListingRecord | null>(null);
   const [status, setStatus] = useState("");
   const [pendingId, setPendingId] = useState("");
 
@@ -71,8 +68,8 @@ export function AdminDashboard({
       }
 
       setListings((current) => current.filter((listing) => listing.id !== id));
-      if (editingListing?.id === id) {
-        setEditingListing(null);
+      if (editingListingFull?.id === id) {
+        setEditingListingFull(null);
       }
       setStatus("大楼已删除。");
     } catch (error) {
@@ -89,12 +86,8 @@ export function AdminDashboard({
     try {
       const response = await fetch(`/api/listings/${listing.id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          isPublished: !listing.isPublished
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPublished: !listing.isPublished })
       });
       const result = await response.json();
 
@@ -105,12 +98,10 @@ export function AdminDashboard({
       setListings((current) =>
         current.map((item) => (item.id === listing.id ? { ...item, isPublished: result.listing.isPublished } : item))
       );
-      if (editingListing?.id === listing.id) {
-        setEditingListing(result.listing);
+      if (editingListingFull?.id === listing.id) {
+        setEditingListingFull(result.listing);
       }
-      setStatus(
-        result.listing.isPublished ? "上架成功。" : "房源已下架，前台将不再显示。"
-      );
+      setStatus(result.listing.isPublished ? "上架成功。" : "房源已下架，前台将不再显示。");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "更新状态失败");
     } finally {
@@ -118,16 +109,51 @@ export function AdminDashboard({
     }
   }
 
+  // 整页：管理户型
   if (managingFloorPlansFor) {
     return (
-       <AdminFloorPlanManager 
-          property={managingFloorPlansFor} 
-          onClose={() => setManagingFloorPlansFor(null)} 
-          onUpdate={() => fetchUpdatedProperty(managingFloorPlansFor.id)}
-       />
+      <AdminFloorPlanManager
+        property={managingFloorPlansFor}
+        onClose={() => setManagingFloorPlansFor(null)}
+        onUpdate={() => fetchUpdatedProperty(managingFloorPlansFor.id)}
+      />
     );
   }
 
+  // 整页：编辑大楼
+  if (editingListingFull) {
+    return (
+      <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden mb-8 border border-slate-100">
+        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <div>
+            <h2 className="text-2xl font-bold">{editingListingFull.name} - 编辑大楼信息</h2>
+            <p className="text-sm text-slate-500 mt-1">修改大楼基础信息，保存后立即生效。</p>
+          </div>
+          <button
+            onClick={() => setEditingListingFull(null)}
+            className="px-5 py-2.5 bg-slate-200 text-slate-800 rounded-full text-sm font-medium hover:bg-slate-300 transition-colors"
+          >
+            返回大楼列表
+          </button>
+        </div>
+        <div className="p-6">
+          <AdminListingForm
+            initialData={editingListingFull}
+            onCancelEdit={() => setEditingListingFull(null)}
+            onSuccess={(listing) => {
+              setListings((current) =>
+                current.map((item) => (item.id === listing.id ? listing : item))
+              );
+              setEditingListingFull(null);
+              setStatus("公寓更新成功。");
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // 主列表页
   return (
     <div className="space-y-10">
       <div className="grid gap-4 sm:grid-cols-3">
@@ -174,7 +200,6 @@ export function AdminDashboard({
                     ⚠️ 缺少主图，请点击上传
                   </p>
                 </div>
-
                 <Link
                   href={`/admin/listings/${listing.id}`}
                   className="inline-flex items-center justify-center rounded-full bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
@@ -196,29 +221,22 @@ export function AdminDashboard({
 
       <section>
         <div className="max-w-3xl">
-          <p className="section-label">{editingListing ? "编辑公寓" : "新增公寓"}</p>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-            {editingListing ? `正在更新大楼基础信息：${editingListing.name}` : "新建一个公寓大楼"}
-          </h2>
+          <p className="section-label">新增公寓</p>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">新建一个公寓大楼</h2>
           <p className="mt-3 text-base leading-7 text-slate-600">
-            这里的保存会直接入库。新建完大楼后，你可以在下方的名录中点击“管理户型”来添加独立的户型。
+            这里的保存会直接入库。新建完大楼后，你可以在下方的名录中点击"管理户型"来添加独立的户型。
           </p>
         </div>
 
         <div className="mt-6">
           <AdminListingForm
-            initialData={editingListing}
-            onCancelEdit={() => setEditingListing(null)}
+            initialData={null}
+            onCancelEdit={() => {}}
             onSuccess={(listing, mode) => {
-              setListings((current) => {
-                if (mode === "create") {
-                  return [listing, ...current];
-                }
-
-                return current.map((item) => (item.id === listing.id ? listing : item));
-              });
-              setEditingListing(null);
-              setStatus(mode === "create" ? "公寓已创建。请通过下方名录管理户型！" : "公寓更新成功。");
+              if (mode === "create") {
+                setListings((current) => [listing, ...current]);
+                setStatus("公寓已创建。请通过下方名录管理户型！");
+              }
             }}
           />
         </div>
@@ -238,16 +256,11 @@ export function AdminDashboard({
         <div className="mt-6 space-y-4">
           {listings.length ? (
             listings.map((listing) => (
-              <div
-                key={listing.id}
-                className="glass-panel rounded-[2rem] p-5 sm:p-6"
-              >
+              <div key={listing.id} className="glass-panel rounded-[2rem] p-5 sm:p-6">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="text-2xl font-semibold text-slate-950">
-                        {listing.name}
-                      </h3>
+                      <h3 className="text-2xl font-semibold text-slate-950">{listing.name}</h3>
                       <span
                         className={[
                           "rounded-full px-3 py-1 text-xs font-medium",
@@ -274,9 +287,7 @@ export function AdminDashboard({
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
                           Current Promotion
                         </p>
-                        <p className="mt-2 text-sm leading-6 text-emerald-950">
-                          {listing.promotions}
-                        </p>
+                        <p className="mt-2 text-sm leading-6 text-emerald-950">{listing.promotions}</p>
                       </div>
                     ) : null}
 
@@ -288,16 +299,11 @@ export function AdminDashboard({
                         {getPetPolicyLabel(listing.petPolicy)}
                       </span>
                       {listing.nearbySchools.map((school) => (
-                        <span
-                          key={`${listing.id}-${school}`}
-                          className="rounded-full bg-white/70 px-3 py-1"
-                        >
+                        <span key={`${listing.id}-${school}`} className="rounded-full bg-white/70 px-3 py-1">
                           {getSchoolDisplayLabel(school)}
                         </span>
                       ))}
-                      <span className="rounded-full bg-white/70 px-3 py-1">
-                        Slug: {listing.slug}
-                      </span>
+                      <span className="rounded-full bg-white/70 px-3 py-1">Slug: {listing.slug}</span>
                     </div>
                   </div>
 
@@ -313,7 +319,7 @@ export function AdminDashboard({
 
                     <button
                       type="button"
-                      onClick={() => setEditingListing(listing)}
+                      onClick={() => setEditingListingFull(listing)}
                       className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                       <PencilLine className="h-4 w-4" />
@@ -354,7 +360,7 @@ export function AdminDashboard({
             <div className="glass-panel rounded-[2rem] p-8 text-center">
               <p className="text-lg font-semibold text-slate-950">还没有房源</p>
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                你可以先在上面的表单里新建一个公寓大楼。保存成功后，下方会列出大楼信息，点击“管理户型”即可录入具体房间。
+                你可以先在上面的表单里新建一个公寓大楼。保存成功后，下方会列出大楼信息，点击"管理户型"即可录入具体房间。
               </p>
             </div>
           )}
