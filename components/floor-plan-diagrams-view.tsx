@@ -144,7 +144,7 @@ export function FloorPlanDiagramsView({ diagrams, floorPlans = [], showRentCard 
                 key={`${card.url}-${index}`}
                 type="button"
                 onClick={() => setLightboxUrl(card.url)}
-                className="group overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-2 text-left transition-all hover:border-slate-300 hover:shadow-lg"
+                className="group relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-2 text-left transition-all hover:border-slate-300 hover:shadow-lg"
               >
                 <div className="relative h-56 overflow-hidden rounded-[1rem] bg-slate-50">
                   <Image
