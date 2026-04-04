@@ -269,6 +269,16 @@ export function AdminDashboard({
                     <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
                       {listing.description}
                     </p>
+                    {listing.promotions ? (
+                      <div className="mt-4 rounded-[1.25rem] border border-emerald-200 bg-emerald-50/80 px-4 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                          Current Promotion
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-emerald-950">
+                          {listing.promotions}
+                        </p>
+                      </div>
+                    ) : null}
 
                     <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
                       <span className="rounded-full bg-white/70 px-3 py-1">

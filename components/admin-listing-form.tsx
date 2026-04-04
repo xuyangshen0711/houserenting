@@ -232,6 +232,21 @@ export function AdminListingForm({
               <input type="checkbox" checked={form.isPublished} onChange={(e) => updateField("isPublished", e.target.checked)} />
            </label>
         </div>
+        <div className="mt-5">
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-700">当前优惠 (Promotions)</span>
+            <textarea
+              value={form.promotions}
+              onChange={(e) => updateField("promotions", e.target.value)}
+              rows={4}
+              placeholder="例如：Apply within 24 hours and receive 2 months free. 多条优惠可以用分号或换行分隔。"
+              className="w-full rounded-[1.5rem] border bg-white/85 px-4 py-3 outline-none"
+            />
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              这里填写当前有效的 leasing promotion。前台会直接展示，之后如果公寓调整优惠，你可以随时回来修改。
+            </p>
+          </label>
+        </div>
         <div className="mt-5 rounded-[1.5rem] border bg-white/70 p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>

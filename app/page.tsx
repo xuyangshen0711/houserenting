@@ -75,7 +75,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <div>
             <span className="section-label">三类筛选</span>
             <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-              先看地区，再看学校，最后按房租排序
+              开始找寻您的新家
             </h2>
           </div>
           <p className="hidden text-xs font-light tracking-wide text-slate-400 sm:block">
@@ -117,11 +117,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <div className="glass-filter rounded-[2rem] p-6 sm:p-8">
           <span className="section-label">继续深入聊一聊</span>
           <h2 className="mt-5 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-            有心仪房源，欢迎直接联系
+            有心仪房源，想看更多视频，欢迎直接联系
           </h2>
           <p className="mt-3 text-sm font-light leading-7 text-slate-500">
             添加微信：
-            <span className="ml-2 font-semibold tracking-widest text-slate-900">UOLOinxx</span>
+            <span className="ml-2 font-semibold tracking-widest text-slate-900">Aurabostonhomes</span>
           </p>
         </div>
       </section>

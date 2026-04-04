@@ -160,6 +160,22 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         </div>
       </section>
 
+      {listing.promotions ? (
+        <section className="content-wrap pt-10">
+          <div className="glass-panel rounded-[2rem] border border-emerald-200/70 bg-emerald-50/70 p-6 sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
+              Current Promotion
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-emerald-950">
+              当前有效优惠
+            </h2>
+            <p className="mt-4 max-w-4xl text-base leading-8 text-emerald-950/90">
+              {listing.promotions}
+            </p>
+          </div>
+        </section>
+      ) : null}
+
       <section className="content-wrap pt-10">
         <div className="glass-panel rounded-[2rem] p-6 sm:p-8">
           <div className="grid gap-6 sm:grid-cols-3">
