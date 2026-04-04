@@ -87,7 +87,10 @@ export async function getFeaturedListings(
       }
     });
 
-    return sortListingsByRent(properties.map(mapToListingViewModel), sort);
+    return sortListingsByRent(properties.map((p) => mapToListingViewModel({
+      ...p,
+      floorPlanDiagrams: (p.floorPlanDiagrams as Record<string, string[]>) ?? null
+    })), sort);
   } catch(e) {
     console.error(e);
     return [];
@@ -113,7 +116,10 @@ export async function getListingBySlug(slug: string) {
       return null;
     }
 
-    return mapToListingViewModel(property);
+    return mapToListingViewModel({
+      ...property,
+      floorPlanDiagrams: (property.floorPlanDiagrams as Record<string, string[]>) ?? null
+    });
   } catch {
     return null;
   }
@@ -153,7 +159,8 @@ export async function getAdminListings(): Promise<AdminListingRecord[]> {
       isPublished: property.isPublished,
       createdAt: property.createdAt.toISOString(),
       updatedAt: property.updatedAt.toISOString(),
-      floorPlans: property.floorPlans
+      floorPlans: property.floorPlans,
+      floorPlanDiagrams: (property.floorPlanDiagrams as Record<string, string[]>) ?? null
     }));
   } catch {
     return [];
@@ -196,7 +203,8 @@ export async function getAdminListingById(id: string): Promise<AdminListingRecor
       isPublished: property.isPublished,
       createdAt: property.createdAt.toISOString(),
       updatedAt: property.updatedAt.toISOString(),
-      floorPlans: property.floorPlans
+      floorPlans: property.floorPlans,
+      floorPlanDiagrams: (property.floorPlanDiagrams as Record<string, string[]>) ?? null
     };
   } catch {
     return null;

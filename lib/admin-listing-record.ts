@@ -20,6 +20,7 @@ type AdminPropertyRecord = {
   createdAt: Date;
   updatedAt: Date;
   floorPlans?: FloorPlanSource[];
+  floorPlanDiagrams?: Record<string, string[]> | null;
 };
 
 export function toAdminListingRecord(property: AdminPropertyRecord): AdminListingRecord {
@@ -42,6 +43,7 @@ export function toAdminListingRecord(property: AdminPropertyRecord): AdminListin
     isPublished: property.isPublished,
     createdAt: property.createdAt.toISOString(),
     updatedAt: property.updatedAt.toISOString(),
-    floorPlans: property.floorPlans ?? []
+    floorPlans: property.floorPlans ?? [],
+    floorPlanDiagrams: (property.floorPlanDiagrams as Record<string, string[]>) ?? null
   };
 }

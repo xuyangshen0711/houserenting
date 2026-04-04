@@ -30,6 +30,7 @@ export type AdminListingRecord = {
   createdAt: string;
   updatedAt: string;
   floorPlans: FloorPlanSource[];
+  floorPlanDiagrams: Record<string, string[]> | null;
 };
 
 const areaLabelMap: Record<Area, string> = {
@@ -65,9 +66,12 @@ const areaTaglineMap: Record<Area, string> = {
 const layoutLabelMap: Record<LayoutType, string> = {
   STUDIO: "Studio",
   ONE_BED_ONE_BATH: "1B1B",
+  ONE_BED_DEN: "1B+Den",
   TWO_BED_TWO_BATH: "2B2B",
   THREE_BED_TWO_BATH: "3B2B"
 };
+
+export type FloorPlanDiagrams = Partial<Record<LayoutType, string[]>>;
 
 const petPolicyLabelMap: Record<PetPolicy, string> = {
   OPEN: "不限",
@@ -200,6 +204,7 @@ type ListingSource = {
   transitInfo: string | null;
   isPublished: boolean;
   floorPlans: FloorPlanSource[];
+  floorPlanDiagrams?: Record<string, string[]> | null;
 };
 
 export type FloorPlanViewModel = {
@@ -232,6 +237,7 @@ export type ListingViewModel = {
   tagline: string;
   isPublished: boolean;
   floorPlans: FloorPlanViewModel[];
+  floorPlanDiagrams: Record<string, string[]>;
 };
 
 export function mapToListingViewModel(property: ListingSource): ListingViewModel {
@@ -268,6 +274,7 @@ export function mapToListingViewModel(property: ListingSource): ListingViewModel
     transitInfo: property.transitInfo ?? "交通信息待补充",
     tagline: getTagline(property.area),
     isPublished: property.isPublished,
-    floorPlans: mappedFloorPlans
+    floorPlans: mappedFloorPlans,
+    floorPlanDiagrams: (property.floorPlanDiagrams as Record<string, string[]>) ?? {}
   };
 }

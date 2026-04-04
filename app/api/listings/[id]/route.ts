@@ -70,7 +70,8 @@ export async function PATCH(request: Request, context: RouteContext) {
         ...(body.imageUrls !== undefined ? { imageUrls: body.imageUrls } : {}),
         ...(body.videoUrls !== undefined ? { videoUrls: body.videoUrls } : {}),
         ...(body.description !== undefined ? { description: body.description } : {}),
-        ...(body.transitInfo !== undefined ? { transitInfo: body.transitInfo } : {})
+        ...(body.transitInfo !== undefined ? { transitInfo: body.transitInfo } : {}),
+        ...(body.floorPlanDiagrams !== undefined ? { floorPlanDiagrams: body.floorPlanDiagrams } : {})
       },
       include: {
         floorPlans: true
@@ -84,7 +85,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     return NextResponse.json({
       message: "属性已更新。",
-      listing: toAdminListingRecord(property)
+      listing: toAdminListingRecord({
+        ...property,
+        floorPlanDiagrams: (property.floorPlanDiagrams as Record<string, string[]>) ?? null
+      })
     });
   } catch (error) {
     return NextResponse.json({

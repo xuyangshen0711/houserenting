@@ -65,7 +65,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       message: "公寓已成功写入数据库。",
-      listing: toAdminListingRecord(property)
+      listing: toAdminListingRecord({
+        ...property,
+        floorPlanDiagrams: (property.floorPlanDiagrams as Record<string, string[]>) ?? null
+      })
     });
   } catch (error) {
     return NextResponse.json(

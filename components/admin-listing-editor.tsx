@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { AdminListingForm } from "@/components/admin-listing-form";
+import { AdminDiagramManager } from "@/components/admin-diagram-manager";
 import type { AdminListingRecord } from "@/lib/listing-view-model";
 
 type AdminListingEditorProps = {
@@ -49,7 +50,17 @@ export function AdminListingEditor({ listing }: AdminListingEditorProps) {
             }}
           />
         </div>
+
+        <div className="mt-8">
+          <AdminDiagramManager
+            property={currentListing}
+            onUpdate={(nextListing) => {
+              setCurrentListing(nextListing);
+            }}
+          />
+        </div>
       </div>
     </section>
   );
 }
+

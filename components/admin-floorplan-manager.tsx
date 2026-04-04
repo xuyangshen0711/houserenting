@@ -33,6 +33,7 @@ const initialFloorPlanState: FloorPlanState = {
 const layoutSections = [
   { value: "STUDIO", label: "Studio", shortLabel: "Studio" },
   { value: "ONE_BED_ONE_BATH", label: "1 Bedroom", shortLabel: "1B" },
+  { value: "ONE_BED_DEN", label: "1 Bed + Den", shortLabel: "1B+Den" },
   { value: "TWO_BED_TWO_BATH", label: "2 Bedroom", shortLabel: "2B" },
   { value: "THREE_BED_TWO_BATH", label: "3 Bedroom", shortLabel: "3B" }
 ] as const;

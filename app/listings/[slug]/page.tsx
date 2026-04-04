@@ -4,6 +4,7 @@ import { BedDouble, MapPin, PawPrint, Sofa, TrainFront, Wallet } from "lucide-re
 import { notFound } from "next/navigation";
 import { getListingBySlug } from "@/lib/listings";
 import { NearbyPlaces } from "@/components/nearby-places";
+import { FloorPlanDiagramsView } from "@/components/floor-plan-diagrams-view";
 
 type ListingDetailPageProps = {
   params: Promise<{
@@ -139,6 +140,8 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
           </div>
         </section>
       ) : null}
+
+      <FloorPlanDiagramsView diagrams={listing.floorPlanDiagrams} />
 
       <section className="content-wrap pt-10">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

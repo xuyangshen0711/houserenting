@@ -67,7 +67,10 @@ export async function POST(request: Request) {
       message: normalized.imageUrls.length
         ? "房源已导入数据库，当前默认保持未发布。"
         : "房源已导入数据库，但还缺少主图，请到后台补充后再发布。",
-      listing: toAdminListingRecord(property)
+      listing: toAdminListingRecord({
+        ...property,
+        floorPlanDiagrams: (property.floorPlanDiagrams as Record<string, string[]>) ?? null
+      })
     });
   } catch (error) {
     return NextResponse.json(

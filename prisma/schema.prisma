@@ -25,6 +25,7 @@ enum Area {
 enum LayoutType {
   STUDIO
   ONE_BED_ONE_BATH
+  ONE_BED_DEN
   TWO_BED_TWO_BATH
   THREE_BED_TWO_BATH
 }
@@ -50,6 +51,7 @@ model Property {
   nearbySchools    String[]     @default([])
   imageUrls        String[]
   videoUrls        String[]     @default([])
+  floorPlanDiagrams Json?
   description      String       @db.Text
   transitInfo         String?
   latitude            Float?
