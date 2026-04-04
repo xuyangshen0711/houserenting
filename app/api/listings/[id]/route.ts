@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createAdminSessionValue } from "@/lib/admin";
 import { toAdminListingRecord } from "@/lib/admin-listing-record";
+import { resolvePropertySlug } from "@/lib/property-slug";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -43,11 +44,20 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "没有找到对应的记录。" }, { status: 404 });
     }
 
+    const nextSlug =
+      typeof body.slug === "string" && body.slug.trim()
+        ? await resolvePropertySlug({
+            desiredSlug: body.slug,
+            name: typeof body.name === "string" ? body.name : existing.slug,
+            excludeId: id
+          })
+        : undefined;
+
     const property = await prisma.property.update({
       where: { id },
       data: {
         ...(body.name !== undefined ? { name: body.name } : {}),
-        ...(body.slug !== undefined ? { slug: body.slug } : {}),
+        ...(nextSlug ? { slug: nextSlug } : {}),
         ...(body.address !== undefined ? { address: body.address } : {}),
         ...(body.area !== undefined ? { area: body.area } : {}),
         ...(body.nearbySchools !== undefined ? { nearbySchools: body.nearbySchools } : {}),

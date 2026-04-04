@@ -85,6 +85,13 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 66vw"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
+            <div className="absolute bottom-6 right-6 max-w-[80%] text-right text-white">
+              <span className="mb-3 inline-block rounded-full border border-white/20 bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur-md">
+                {listing.area}
+              </span>
+              <h2 className="text-3xl font-black tracking-tight sm:text-4xl">{listing.title}</h2>
+            </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
             {listing.imageUrls.slice(1, 3).map((imageUrl, index) => (

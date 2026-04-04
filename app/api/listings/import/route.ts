@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { createAdminSessionValue } from "@/lib/admin";
 import { toAdminListingRecord } from "@/lib/admin-listing-record";
 import { normalizeImportedListing } from "@/lib/listing-import";
+import { resolvePropertySlug } from "@/lib/property-slug";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
@@ -26,10 +27,14 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const normalized = normalizeImportedListing(body);
+    const slug = await resolvePropertySlug({
+      desiredSlug: normalized.slug,
+      name: normalized.name
+    });
 
     const property = await prisma.property.create({
       data: {
-        slug: normalized.slug,
+        slug,
         name: normalized.name,
         address: normalized.address,
         area: normalized.area,

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createAdminSessionValue } from "@/lib/admin";
 import { toAdminListingRecord } from "@/lib/admin-listing-record";
+import { resolvePropertySlug } from "@/lib/property-slug";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
@@ -24,6 +25,10 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
+    const slug = await resolvePropertySlug({
+      desiredSlug: typeof body.slug === "string" ? body.slug : "",
+      name: String(body.name ?? "")
+    });
 
     if (!Array.isArray(body.imageUrls) || body.imageUrls.length === 0) {
       return NextResponse.json(
@@ -34,7 +39,7 @@ export async function POST(request: Request) {
 
     const property = await prisma.property.create({
       data: {
-        slug: body.slug,
+        slug,
         name: body.name,
         address: body.address,
         area: body.area,

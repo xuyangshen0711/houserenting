@@ -190,8 +190,11 @@ export function AdminListingForm({
             <input required value={form.name} onChange={(e) => updateField("name", e.target.value)} className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none" />
           </label>
           <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">唯一标识符 (Slug)</span>
-            <input required value={form.slug} onChange={(e) => updateField("slug", e.target.value)} className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none" />
+            <span className="mb-2 block text-sm font-medium text-slate-700">页面链接名 (Slug)</span>
+            <input value={form.slug} onChange={(e) => updateField("slug", e.target.value)} placeholder="可留空，系统会自动生成" className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none" />
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              这是房源页面链接里的那一段，例如 `/listings/artemas-everett`。你可以留空，系统会根据公寓名称自动生成并保持唯一。
+            </p>
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">详细地址</span>
