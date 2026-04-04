@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BedDouble, MapPin, PawPrint, Sofa, TrainFront, Wallet } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getListingBySlug } from "@/lib/listings";
+import { NearbyPlaces } from "@/components/nearby-places";
 
 type ListingDetailPageProps = {
   params: Promise<{
@@ -175,6 +176,8 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
           </div>
         </section>
       ) : null}
+
+      <NearbyPlaces propertyId={listing.id} />
 
       <section className="content-wrap pt-10">
         <div className="glass-panel rounded-[2rem] p-6 sm:p-8">
