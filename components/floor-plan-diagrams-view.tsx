@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { X, ZoomIn } from "lucide-react";
+import { X, ZoomIn, Wallet } from "lucide-react";
 import { optimizeCloudinaryUrl } from "@/lib/cloudinary-optimization";
 import type { FloorPlanViewModel } from "@/lib/listing-view-model";
 
 type FloorPlanDiagramsViewProps = {
   diagrams: Record<string, string[]>;
   floorPlans?: FloorPlanViewModel[];
+  showRentCard?: boolean;
 };
 
 const diagramCategories = [
@@ -51,7 +52,7 @@ function getSqftRange(floorPlans: FloorPlanViewModel[], layoutKey: string): stri
   return min === max ? `${min} sq.ft` : `${min}–${max} sq.ft`;
 }
 
-export function FloorPlanDiagramsView({ diagrams, floorPlans = [] }: FloorPlanDiagramsViewProps) {
+export function FloorPlanDiagramsView({ diagrams, floorPlans = [], showRentCard = false }: FloorPlanDiagramsViewProps) {
   // Filter to only categories that have images
   const availableCategories = diagramCategories.filter(
     (c) => (diagrams[c.value]?.length ?? 0) > 0
@@ -139,6 +140,27 @@ export function FloorPlanDiagramsView({ diagrams, floorPlans = [] }: FloorPlanDi
           </div>
         </div>
       </section>
+
+      {showRentCard && (
+        <section className="content-wrap pt-4">
+          <div className="glass-panel rounded-[2rem] p-5">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/70 text-slate-900">
+                <Wallet className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-sm text-slate-500">月租金</p>
+                <p className="mt-1 text-lg font-semibold text-slate-950">
+                  {(() => {
+                    const range = getPriceRange(floorPlans, activeTab);
+                    return range ? `US$ ${range.replace(/\$/g, "")} / 月` : "价格待定";
+                  })()}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Lightbox */}
       {lightboxUrl && (

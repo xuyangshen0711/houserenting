@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BedDouble, MapPin, PawPrint, Sofa, TrainFront, Wallet } from "lucide-react";
+import { BedDouble, MapPin, PawPrint, Sofa, TrainFront } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getListingBySlug } from "@/lib/listings";
 import { NearbyPlaces } from "@/components/nearby-places";
@@ -21,11 +21,6 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   }
 
   const infoCards = [
-    {
-      icon: Wallet,
-      label: "月租金",
-      value: `US$ ${listing.monthlyRent.toLocaleString()}`
-    },
     {
       icon: MapPin,
       label: "位置",
@@ -141,7 +136,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         </section>
       ) : null}
 
-      <FloorPlanDiagramsView diagrams={listing.floorPlanDiagrams} floorPlans={listing.floorPlans} />
+      <FloorPlanDiagramsView diagrams={listing.floorPlanDiagrams} floorPlans={listing.floorPlans} showRentCard />
 
       <section className="content-wrap pt-10">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

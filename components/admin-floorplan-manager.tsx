@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { CloudinaryUploader } from "@/components/cloudinary-uploader";
+import { AdminDiagramManager } from "@/components/admin-diagram-manager";
 import { optimizeCloudinaryUrl } from "@/lib/cloudinary-optimization";
 import type { AdminListingRecord, FloorPlanSource } from "@/lib/listing-view-model";
 
@@ -43,6 +44,7 @@ const layoutLabels = Object.fromEntries(
 ) as Record<string, string>;
 
 export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloorPlanManagerProps) {
+  const [currentProperty, setCurrentProperty] = useState(property);
   const [floorPlans, setFloorPlans] = useState<FloorPlanSource[]>(property.floorPlans);
   const [editingPlan, setEditingPlan] = useState<FloorPlanState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -279,6 +281,12 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
                 ))}
               </div>
             )}
+          <div className="mt-8">
+            <AdminDiagramManager
+              property={currentProperty}
+              onUpdate={(nextListing) => setCurrentProperty(nextListing)}
+            />
+          </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 mt-2">
