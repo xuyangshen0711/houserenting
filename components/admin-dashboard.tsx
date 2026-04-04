@@ -326,13 +326,6 @@ export function AdminDashboard({
                       编辑大楼
                     </button>
 
-                    <Link
-                      href={`/admin/listings/${listing.id}`}
-                      className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100"
-                    >
-                      补主图
-                    </Link>
-
                     <button
                       type="button"
                       onClick={() => void handleTogglePublish(listing)}

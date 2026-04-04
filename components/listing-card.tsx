@@ -35,7 +35,24 @@ export function ListingCard({ listing, index }: ListingCardProps) {
 
         {/* Info & Floor Plans */}
         <div className="w-full md:w-3/5 p-6 md:p-8 flex flex-col">
-          <div className="grid grid-cols-2 gap-4 mb-6 text-sm md:mb-8 md:grid-cols-4">
+          <Link
+            href={`/listings/${listing.slug}`}
+            className="mb-5 flex items-start justify-between gap-4 rounded-[1.25rem] border border-white/40 bg-white/55 px-4 py-4 backdrop-blur-sm md:hidden"
+          >
+            <div className="min-w-0">
+              <p className="truncate text-lg font-semibold text-slate-950">{listing.title}</p>
+              <p className="mt-1 text-sm text-slate-500">{listing.area}</p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-400">起始价格</p>
+              <p className="mt-1 text-lg font-black text-slate-950">
+                ${listing.monthlyRent.toLocaleString()}
+              </p>
+              <p className="text-xs text-slate-400">/ 月</p>
+            </div>
+          </Link>
+
+          <div className="hidden text-sm md:mb-8 md:grid md:grid-cols-4 md:gap-4">
             <div>
               <p className="text-xs font-medium tracking-wide text-slate-400 mb-1">中介费</p>
               <p className="font-semibold text-slate-800">{listing.hasBrokerFee ? "有中介费" : "无中介费"}</p>
@@ -54,15 +71,15 @@ export function ListingCard({ listing, index }: ListingCardProps) {
             </div>
           </div>
 
-          <div className="mb-4 text-sm font-light text-slate-500 border-l-2 border-violet-200 pl-3">
+          <div className="mb-4 hidden border-l-2 border-violet-200 pl-3 text-sm font-light text-slate-500 md:block">
             🚆 {listing.transitInfo}
           </div>
 
-          <h4 className="mb-4 mt-auto text-sm font-semibold uppercase tracking-[0.12em] text-slate-400">点击了解更多</h4>
+          <h4 className="mb-4 mt-auto hidden text-sm font-semibold uppercase tracking-[0.12em] text-slate-400 md:block">点击了解更多</h4>
           <div className="space-y-3">
             <Link
               href={`/listings/${listing.slug}`}
-              className="group flex flex-col justify-between rounded-xl border border-white/40 bg-white/50 p-4 transition duration-200 hover:scale-[1.015] hover:border-white/60 hover:bg-white/75 hover:shadow-float md:flex-row md:items-center"
+              className="group hidden flex-col justify-between rounded-xl border border-white/40 bg-white/50 p-4 transition duration-200 hover:scale-[1.015] hover:border-white/60 hover:bg-white/75 hover:shadow-float md:flex md:flex-row md:items-center"
             >
               <div className="flex items-start gap-4 md:items-center">
                 <span className="border border-slate-200 bg-white text-slate-700 px-3 py-1 rounded-lg text-sm font-bold shadow-sm transition-transform duration-200 group-hover:scale-105">
@@ -84,6 +101,13 @@ export function ListingCard({ listing, index }: ListingCardProps) {
                 </span>
                 <span className="text-sm font-light text-slate-400">/ 月</span>
               </div>
+            </Link>
+
+            <Link
+              href={`/listings/${listing.slug}`}
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 md:hidden"
+            >
+              查看这套公寓
             </Link>
           </div>
         </div>
