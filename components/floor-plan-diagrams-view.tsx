@@ -12,6 +12,13 @@ type FloorPlanDiagramsViewProps = {
   showRentCard?: boolean;
 };
 
+type FloorPlanImageCard = {
+  url: string;
+  name: string | null;
+  monthlyRent: number | null;
+  roomSizeSqFt: number | null;
+};
+
 const diagramCategories = [
   { value: "STUDIO", label: "Studio" },
   { value: "ONE_BED_ONE_BATH", label: "1B" },
@@ -20,19 +27,8 @@ const diagramCategories = [
   { value: "THREE_BED_TWO_BATH", label: "3B" }
 ] as const;
 
-// Map layout key → layout label from floor plan records
-const LAYOUT_KEY_MAP: Record<string, string> = {
-  STUDIO: "Studio",
-  ONE_BED_ONE_BATH: "1B",
-  ONE_BED_DEN: "1B+Den",
-  TWO_BED_TWO_BATH: "2B",
-  THREE_BED_TWO_BATH: "3B",
-};
-
 function getPriceRange(floorPlans: FloorPlanViewModel[], layoutKey: string): string | null {
-  const label = LAYOUT_KEY_MAP[layoutKey];
-  if (!label) return null;
-  const matching = floorPlans.filter((fp) => fp.layoutLabel === label);
+  const matching = floorPlans.filter((fp) => fp.layout === layoutKey);
   if (matching.length === 0) return null;
   const rents = matching.map((fp) => fp.monthlyRent);
   const min = Math.min(...rents);
@@ -41,15 +37,44 @@ function getPriceRange(floorPlans: FloorPlanViewModel[], layoutKey: string): str
 }
 
 function getSqftRange(floorPlans: FloorPlanViewModel[], layoutKey: string): string | null {
-  const label = LAYOUT_KEY_MAP[layoutKey];
-  if (!label) return null;
   const sqfts = floorPlans
-    .filter((fp) => fp.layoutLabel === label && fp.roomSizeSqFt)
+    .filter((fp) => fp.layout === layoutKey && fp.roomSizeSqFt)
     .map((fp) => fp.roomSizeSqFt!);
   if (sqfts.length === 0) return null;
   const min = Math.min(...sqfts);
   const max = Math.max(...sqfts);
   return min === max ? `${min} sq.ft` : `${min}–${max} sq.ft`;
+}
+
+function getImageCards(
+  floorPlans: FloorPlanViewModel[],
+  diagrams: Record<string, string[]>,
+  layoutKey: string
+): FloorPlanImageCard[] {
+  const metadataByUrl = new Map<string, FloorPlanImageCard>();
+
+  for (const floorPlan of floorPlans.filter((fp) => fp.layout === layoutKey)) {
+    for (const url of floorPlan.imageUrls) {
+      if (!metadataByUrl.has(url)) {
+        metadataByUrl.set(url, {
+          url,
+          name: floorPlan.name || null,
+          monthlyRent: floorPlan.monthlyRent,
+          roomSizeSqFt: floorPlan.roomSizeSqFt,
+        });
+      }
+    }
+  }
+
+  return (diagrams[layoutKey] ?? []).map((url) => {
+    const matched = metadataByUrl.get(url);
+    return matched ?? {
+      url,
+      name: null,
+      monthlyRent: null,
+      roomSizeSqFt: null,
+    };
+  });
 }
 
 export function FloorPlanDiagramsView({ diagrams, floorPlans = [], showRentCard = false }: FloorPlanDiagramsViewProps) {
@@ -67,7 +92,7 @@ export function FloorPlanDiagramsView({ diagrams, floorPlans = [], showRentCard 
     return null;
   }
 
-  const activeUrls = diagrams[activeTab] ?? [];
+  const activeCards = getImageCards(floorPlans, diagrams, activeTab);
 
   return (
     <>
@@ -114,16 +139,16 @@ export function FloorPlanDiagramsView({ diagrams, floorPlans = [], showRentCard 
 
           {/* Diagrams Grid */}
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {activeUrls.map((url, index) => (
+            {activeCards.map((card, index) => (
               <button
-                key={url}
+                key={`${card.url}-${index}`}
                 type="button"
-                onClick={() => setLightboxUrl(url)}
-                className="group relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-2 transition-all hover:border-slate-300 hover:shadow-lg"
+                onClick={() => setLightboxUrl(card.url)}
+                className="group overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-2 text-left transition-all hover:border-slate-300 hover:shadow-lg"
               >
                 <div className="relative h-56 overflow-hidden rounded-[1rem] bg-slate-50">
                   <Image
-                    src={optimizeCloudinaryUrl(url, "c_fit,h_500,f_auto,q_auto")}
+                    src={optimizeCloudinaryUrl(card.url, "c_fit,h_500,f_auto,q_auto")}
                     alt={`户型图 ${index + 1}`}
                     fill
                     className="object-contain transition-transform group-hover:scale-105"
@@ -134,6 +159,23 @@ export function FloorPlanDiagramsView({ diagrams, floorPlans = [], showRentCard 
                   <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-700 opacity-0 shadow-md transition group-hover:opacity-100">
                     <ZoomIn className="h-5 w-5" />
                   </span>
+                </div>
+                <div className="mt-3 rounded-[1rem] bg-slate-50 px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {card.name ?? "该户型"}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {card.monthlyRent !== null
+                          ? `$${card.monthlyRent.toLocaleString()} / 月`
+                          : "价格待补充"}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600">
+                      {card.roomSizeSqFt ? `${card.roomSizeSqFt} sq.ft` : "面积待补充"}
+                    </span>
+                  </div>
                 </div>
               </button>
             ))}

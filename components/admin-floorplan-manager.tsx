@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { CloudinaryUploader } from "@/components/cloudinary-uploader";
-import { AdminDiagramManager } from "@/components/admin-diagram-manager";
 import { optimizeCloudinaryUrl } from "@/lib/cloudinary-optimization";
 import type { AdminListingRecord, FloorPlanSource } from "@/lib/listing-view-model";
 
@@ -44,12 +43,19 @@ const layoutLabels = Object.fromEntries(
 ) as Record<string, string>;
 
 export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloorPlanManagerProps) {
-  const [currentProperty, setCurrentProperty] = useState(property);
   const [floorPlans, setFloorPlans] = useState<FloorPlanSource[]>(property.floorPlans);
   const [editingPlan, setEditingPlan] = useState<FloorPlanState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState("");
   const [selectedLayoutFilter, setSelectedLayoutFilter] = useState<string>("ALL");
+  const legacyDiagramCount = useMemo(
+    () =>
+      Object.values(property.floorPlanDiagrams ?? {}).reduce(
+        (total, urls) => total + (Array.isArray(urls) ? urls.length : 0),
+        0
+      ),
+    [property.floorPlanDiagrams]
+  );
 
   const floorPlansByLayout = useMemo(() => {
     return layoutSections.map((section) => ({
@@ -171,7 +177,7 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
                 <div>
                   <h3 className="text-lg font-semibold text-slate-950">按户型分类管理</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    先选分类再录入，会比从一堆户型里翻找更顺手。用户前台看到的 Studio、1B、2B、3B 也会更统一。
+                    这里现在是户型资料的主入口。每条户型记录对应一套价格、面积和图片，前台每张户型图下面都会显示这条记录里的价格与面积。
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -188,6 +194,15 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
                 </div>
               </div>
             </div>
+
+            {legacyDiagramCount > 0 ? (
+              <div className="mb-6 rounded-[1.75rem] border border-amber-200 bg-amber-50/80 p-5">
+                <h3 className="text-base font-semibold text-amber-950">检测到旧版户型图库</h3>
+                <p className="mt-2 text-sm leading-6 text-amber-900/80">
+                  数据库里还保留着旧字段 `floorPlanDiagrams` 的 {legacyDiagramCount} 张图片。前台目前会继续兼容显示这些图片，但后台录入已经统一回到上面的户型记录里，避免再出现两套数据分开维护。
+                </p>
+              </div>
+            ) : null}
 
             <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <h3 className="text-lg font-semibold">现有户型列表</h3>
@@ -262,6 +277,9 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
                                <span className="mr-2 inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold">{layoutLabels[fp.layout]}</span>
                                ${fp.monthlyRent} / 月 {fp.roomSizeSqFt ? `· ${fp.roomSizeSqFt} sq.ft` : ""}
                             </div>
+                            <p className="mb-4 text-xs leading-5 text-slate-400">
+                              前台展示：该记录下的每张户型图都会带上这组价格和面积信息。
+                            </p>
                             {fp.imageUrls.length > 0 ? (
                               <div className="mb-4 h-32 w-full overflow-hidden rounded-xl bg-slate-100">
                                 <img src={optimizeCloudinaryUrl(fp.imageUrls[0], "c_fill,h_300,f_auto,q_auto")} alt="封面" className="h-full w-full object-cover" />
@@ -281,12 +299,6 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
                 ))}
               </div>
             )}
-          <div className="mt-8">
-            <AdminDiagramManager
-              property={currentProperty}
-              onUpdate={(nextListing) => setCurrentProperty(nextListing)}
-            />
-          </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 mt-2">
@@ -296,7 +308,7 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
             
             <div className="grid gap-5 md:grid-cols-2 mb-6">
               <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">户型标语或名称 (如 1B1B Courtyard View)</span>
+                <span className="mb-2 block text-sm font-medium text-slate-700">户型标语或名称 (如 1B1B Courtyard View / Studio A)</span>
                 <input required value={editingPlan.name} onChange={(e) => updateField("name", e.target.value)} className="w-full rounded-2xl border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900" />
               </label>
               
@@ -314,11 +326,17 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-700">月租金 ($)</span>
                 <input required type="number" min="0" value={editingPlan.monthlyRent} onChange={(e) => updateField("monthlyRent", e.target.value)} className="w-full rounded-2xl border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900" />
+                <p className="mt-2 text-xs leading-5 text-slate-400">
+                  这条价格会显示在该户型记录下所有图片的下方。
+                </p>
               </label>
               
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-700">面积 (sq.ft) - 可选</span>
                 <input type="number" min="0" value={editingPlan.roomSizeSqFt} onChange={(e) => updateField("roomSizeSqFt", e.target.value)} className="w-full rounded-2xl border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900" />
+                <p className="mt-2 text-xs leading-5 text-slate-400">
+                  如果同一户型分类里有不同面积或不同价格，请分别新建多条户型记录。
+                </p>
               </label>
             </div>
 
@@ -328,7 +346,10 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
             </label>
 
             <div className="mb-8 p-6 bg-white rounded-2xl border">
-               <h4 className="text-sm font-medium text-slate-700 mb-4">上传该户型的室内外照片</h4>
+               <h4 className="text-sm font-medium text-slate-700 mb-2">上传该户型的图片</h4>
+               <p className="mb-4 text-sm leading-6 text-slate-500">
+                 优先上传户型图或平面图；这些图片会直接进入前台详情页的“户型图”展示区域，并继承这条记录的价格与面积。
+               </p>
                <CloudinaryUploader value={editingPlan.imageUrls} onChange={(urls) => updateField("imageUrls", urls)} />
             </div>
 

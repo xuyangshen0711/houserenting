@@ -210,6 +210,7 @@ type ListingSource = {
 export type FloorPlanViewModel = {
   id: string;
   name: string;
+  layout: LayoutType;
   layoutLabel: string;
   monthlyRent: number;
   roomSizeSqFt: number | null;
@@ -240,10 +241,53 @@ export type ListingViewModel = {
   floorPlanDiagrams: Record<string, string[]>;
 };
 
+function normalizeDiagramUrls(urls: unknown): string[] {
+  if (!Array.isArray(urls)) {
+    return [];
+  }
+
+  return urls.filter((url): url is string => typeof url === "string" && url.trim().length > 0);
+}
+
+export function getUnifiedFloorPlanDiagrams(
+  floorPlans: Array<Pick<FloorPlanSource, "layout" | "imageUrls">>,
+  legacyDiagrams?: Record<string, string[]> | null
+): Record<string, string[]> {
+  const merged = new Map<string, string[]>();
+
+  function append(layout: string, urls: unknown) {
+    const nextUrls = normalizeDiagramUrls(urls);
+    if (nextUrls.length === 0) {
+      return;
+    }
+
+    const current = merged.get(layout) ?? [];
+    for (const url of nextUrls) {
+      if (!current.includes(url)) {
+        current.push(url);
+      }
+    }
+    merged.set(layout, current);
+  }
+
+  for (const floorPlan of floorPlans) {
+    append(floorPlan.layout, floorPlan.imageUrls);
+  }
+
+  if (legacyDiagrams) {
+    for (const [layout, urls] of Object.entries(legacyDiagrams)) {
+      append(layout, urls);
+    }
+  }
+
+  return Object.fromEntries(merged.entries());
+}
+
 export function mapToListingViewModel(property: ListingSource): ListingViewModel {
   const mappedFloorPlans = property.floorPlans.map((fp) => ({
     id: fp.id,
     name: fp.name,
+    layout: fp.layout,
     layoutLabel: getLayoutLabel(fp.layout),
     monthlyRent: fp.monthlyRent,
     roomSizeSqFt: fp.roomSizeSqFt,
@@ -275,6 +319,9 @@ export function mapToListingViewModel(property: ListingSource): ListingViewModel
     tagline: getTagline(property.area),
     isPublished: property.isPublished,
     floorPlans: mappedFloorPlans,
-    floorPlanDiagrams: (property.floorPlanDiagrams as Record<string, string[]>) ?? {}
+    floorPlanDiagrams: getUnifiedFloorPlanDiagrams(
+      property.floorPlans,
+      (property.floorPlanDiagrams as Record<string, string[]>) ?? null
+    )
   };
 }
