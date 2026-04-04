@@ -37,29 +37,25 @@ export function ListingCard({ listing, index }: ListingCardProps) {
         <div className="w-full md:w-3/5 p-6 md:p-8 flex flex-col">
           <Link
             href={`/listings/${listing.slug}`}
-            className="mb-5 flex items-start justify-between gap-4 rounded-[1.25rem] border border-white/40 bg-white/55 px-4 py-4 backdrop-blur-sm md:hidden"
+            className="mb-5 flex items-end justify-between gap-4 rounded-[1.25rem] border border-white/40 bg-white/55 px-4 py-4 backdrop-blur-sm md:hidden"
           >
             <div className="min-w-0">
               <p className="truncate text-lg font-semibold text-slate-950">{listing.title}</p>
               <p className="mt-1 text-sm text-slate-500">{listing.area}</p>
             </div>
             <div className="shrink-0 text-right">
-              <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-400">起始价格</p>
-              <p className="mt-1 text-lg font-black text-slate-950">
+              <p className="text-xs font-medium tracking-[0.08em] text-slate-400">起始价格</p>
+              <p className="mt-1 whitespace-nowrap text-xl font-black text-slate-950">
                 ${listing.monthlyRent.toLocaleString()}
+                <span className="ml-1 text-sm font-medium text-slate-400">/ 月</span>
               </p>
-              <p className="text-xs text-slate-400">/ 月</p>
             </div>
           </Link>
 
-          <div className="hidden text-sm md:mb-8 md:grid md:grid-cols-4 md:gap-4">
+          <div className="hidden text-sm md:mb-8 md:grid md:grid-cols-3 md:gap-4">
             <div>
               <p className="text-xs font-medium tracking-wide text-slate-400 mb-1">中介费</p>
               <p className="font-semibold text-slate-800">{listing.hasBrokerFee ? "有中介费" : "无中介费"}</p>
-            </div>
-            <div>
-              <p className="text-xs font-medium tracking-wide text-slate-400 mb-1">本科生</p>
-              <p className="font-semibold text-slate-800">{listing.acceptsUndergrad ? "接受" : "不可"}</p>
             </div>
             <div>
               <p className="text-xs font-medium tracking-wide text-slate-400 mb-1">宠物政策</p>

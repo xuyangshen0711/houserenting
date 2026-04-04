@@ -277,7 +277,7 @@ export function AdminDashboard({
                       {getAreaLabel(listing.area)} · {listing.address}
                     </p>
                     <p className="mt-3 text-sm font-medium text-slate-800">
-                      旗下户型: {listing.floorPlans?.length || 0} 个 · {listing.hasBrokerFee ? "有中介费" : "免中介费"} · {listing.acceptsUndergrad ? "接受本科生" : "不接受本科生"}
+                      旗下户型: {listing.floorPlans?.length || 0} 个 · {listing.hasBrokerFee ? "有中介费" : "免中介费"}
                     </p>
                     <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
                       {listing.description}
