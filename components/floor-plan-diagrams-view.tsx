@@ -4,9 +4,11 @@ import Image from "next/image";
 import { useState } from "react";
 import { X, ZoomIn } from "lucide-react";
 import { optimizeCloudinaryUrl } from "@/lib/cloudinary-optimization";
+import type { FloorPlanViewModel } from "@/lib/listing-view-model";
 
 type FloorPlanDiagramsViewProps = {
   diagrams: Record<string, string[]>;
+  floorPlans?: FloorPlanViewModel[];
 };
 
 const diagramCategories = [
@@ -17,7 +19,39 @@ const diagramCategories = [
   { value: "THREE_BED_TWO_BATH", label: "3B" }
 ] as const;
 
-export function FloorPlanDiagramsView({ diagrams }: FloorPlanDiagramsViewProps) {
+// Map layout key → layout label from floor plan records
+const LAYOUT_KEY_MAP: Record<string, string> = {
+  STUDIO: "Studio",
+  ONE_BED_ONE_BATH: "1B",
+  ONE_BED_DEN: "1B+Den",
+  TWO_BED_TWO_BATH: "2B",
+  THREE_BED_TWO_BATH: "3B",
+};
+
+function getPriceRange(floorPlans: FloorPlanViewModel[], layoutKey: string): string | null {
+  const label = LAYOUT_KEY_MAP[layoutKey];
+  if (!label) return null;
+  const matching = floorPlans.filter((fp) => fp.layoutLabel === label);
+  if (matching.length === 0) return null;
+  const rents = matching.map((fp) => fp.monthlyRent);
+  const min = Math.min(...rents);
+  const max = Math.max(...rents);
+  return min === max ? `$${min.toLocaleString()}` : `$${min.toLocaleString()} – $${max.toLocaleString()}`;
+}
+
+function getSqftRange(floorPlans: FloorPlanViewModel[], layoutKey: string): string | null {
+  const label = LAYOUT_KEY_MAP[layoutKey];
+  if (!label) return null;
+  const sqfts = floorPlans
+    .filter((fp) => fp.layoutLabel === label && fp.roomSizeSqFt)
+    .map((fp) => fp.roomSizeSqFt!);
+  if (sqfts.length === 0) return null;
+  const min = Math.min(...sqfts);
+  const max = Math.max(...sqfts);
+  return min === max ? `${min} sq.ft` : `${min}–${max} sq.ft`;
+}
+
+export function FloorPlanDiagramsView({ diagrams, floorPlans = [] }: FloorPlanDiagramsViewProps) {
   // Filter to only categories that have images
   const availableCategories = diagramCategories.filter(
     (c) => (diagrams[c.value]?.length ?? 0) > 0
@@ -52,19 +86,26 @@ export function FloorPlanDiagramsView({ diagrams }: FloorPlanDiagramsViewProps) 
           <div className="mt-5 flex flex-wrap gap-2">
             {availableCategories.map((category) => {
               const isActive = activeTab === category.value;
+              const price = getPriceRange(floorPlans, category.value);
+              const sqft = getSqftRange(floorPlans, category.value);
               return (
                 <button
                   key={category.value}
                   type="button"
                   onClick={() => setActiveTab(category.value)}
                   className={[
-                    "rounded-full border px-5 py-2.5 text-sm font-medium transition-all",
+                    "rounded-full border px-5 py-2.5 text-left transition-all",
                     isActive
                       ? "border-slate-900 bg-slate-900 text-white shadow-md"
                       : "border-slate-200 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white"
                   ].join(" ")}
                 >
-                  {category.label}
+                  <span className="block text-sm font-medium">{category.label}</span>
+                  {(price || sqft) && (
+                    <span className={["block text-xs mt-0.5", isActive ? "text-white/70" : "text-slate-400"].join(" ")}>
+                      {[price, sqft].filter(Boolean).join(" · ")}
+                    </span>
+                  )}
                 </button>
               );
             })}

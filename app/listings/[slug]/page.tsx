@@ -141,7 +141,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         </section>
       ) : null}
 
-      <FloorPlanDiagramsView diagrams={listing.floorPlanDiagrams} />
+      <FloorPlanDiagramsView diagrams={listing.floorPlanDiagrams} floorPlans={listing.floorPlans} />
 
       <section className="content-wrap pt-10">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
