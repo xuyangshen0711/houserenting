@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import {
   getAreaEnum,
-  getAreaLabel,
   getOrderedAreaLabels,
-  getOrderedSchoolLabels,
   mapToListingViewModel,
+  supportedAreaLabels,
+  orderedSchoolLabels,
   type RentSortValue,
   type AdminListingRecord
 } from "@/lib/listing-view-model";
@@ -16,54 +16,14 @@ function canUseDatabase() {
 
 export async function getUniqueAreas() {
   if (!canUseDatabase()) {
-    return ["全部", ...new Set(mockListings.map((listing) => listing.area))];
+    return ["全部", ...getOrderedAreaLabels(mockListings.map((listing) => listing.area))];
   }
 
-  try {
-    const areas = await prisma.property.findMany({
-      where: {
-        isPublished: true
-      },
-      select: {
-        area: true
-      },
-      distinct: ["area"]
-    });
-
-    const labels = areas.map((item) => getAreaLabel(item.area));
-    return ["全部", ...getOrderedAreaLabels(labels)];
-  } catch {
-    return ["全部", ...new Set(mockListings.map((listing) => listing.area))];
-  }
+  return ["全部", ...supportedAreaLabels];
 }
 
 export async function getUniqueSchools() {
-  if (!canUseDatabase()) {
-    return getOrderedSchoolLabels([
-      ...new Set(mockListings.flatMap((listing) => listing.nearbySchools))
-    ]);
-  }
-
-  try {
-    const properties = await prisma.property.findMany({
-      where: {
-        isPublished: true
-      },
-      select: {
-        nearbySchools: true
-      }
-    });
-
-    const schools = [
-      ...new Set(properties.flatMap((property) => property.nearbySchools).filter(Boolean))
-    ];
-
-    return getOrderedSchoolLabels(schools as string[]);
-  } catch {
-    return getOrderedSchoolLabels([
-      ...new Set(mockListings.flatMap((listing) => listing.nearbySchools))
-    ]);
-  }
+  return orderedSchoolLabels;
 }
 
 function sortListingsByRent<T extends { monthlyRent: number }>(

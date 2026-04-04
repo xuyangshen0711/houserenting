@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CloudinaryUploader } from "@/components/cloudinary-uploader";
-import type { AdminListingRecord } from "@/lib/listing-view-model";
+import {
+  supportedSchoolLabels,
+  type AdminListingRecord
+} from "@/lib/listing-view-model";
 
 type AdminListingFormState = {
   name: string;
@@ -92,6 +95,15 @@ export function AdminListingForm({
     value: AdminListingFormState[Key]
   ) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function toggleSchool(school: string) {
+    updateField(
+      "nearbySchools",
+      form.nearbySchools.includes(school)
+        ? form.nearbySchools.filter((item) => item !== school)
+        : [...form.nearbySchools, school]
+    );
   }
 
   async function syncAssetField(
@@ -189,10 +201,16 @@ export function AdminListingForm({
             <span className="mb-2 block text-sm font-medium text-slate-700">所属区域</span>
             <select value={form.area} onChange={(e) => updateField("area", e.target.value)} className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none">
               <option value="BACK_BAY">Back Bay</option>
+              <option value="BEACON_HILL">Beacon Hill</option>
+              <option value="SEAPORT">Seaport</option>
+              <option value="SOUTH_END">South End</option>
+              <option value="CHELSEA">Chelsea</option>
+              <option value="BRIGHTON">Brighton</option>
               <option value="EVERETT">Everett</option>
               <option value="MALDEN">Malden</option>
               <option value="ALLSTON">Allston</option>
               <option value="CAMBRIDGE">Cambridge</option>
+              <option value="SOMERVILLE">Somerville</option>
               <option value="BROOKLINE">Brookline</option>
             </select>
           </label>
@@ -210,6 +228,41 @@ export function AdminListingForm({
               <span className="text-sm font-medium">上架展示</span>
               <input type="checkbox" checked={form.isPublished} onChange={(e) => updateField("isPublished", e.target.checked)} />
            </label>
+        </div>
+        <div className="mt-5 rounded-[1.5rem] border bg-white/70 p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-800">Nearby Schools</p>
+              <p className="text-sm leading-6 text-slate-500">
+                录入房源时把附近学校一起选上，前台大学分类就能按学校筛选对应公寓。
+              </p>
+            </div>
+            <p className="text-xs font-medium tracking-wide text-slate-400">
+              已选择 {form.nearbySchools.length} 所
+            </p>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {supportedSchoolLabels.map((school) => {
+              const isSelected = form.nearbySchools.includes(school);
+
+              return (
+                <button
+                  key={school}
+                  type="button"
+                  onClick={() => toggleSchool(school)}
+                  className={[
+                    "rounded-full border px-4 py-2 text-sm transition",
+                    isSelected
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                  ].join(" ")}
+                >
+                  {school}
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="mt-5">
            <CloudinaryUploader

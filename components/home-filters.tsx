@@ -145,9 +145,14 @@ export function HomeFilters({
       <FilterPills
         id="school-section"
         title="大学分类"
-        items={schools.map((school) => ({ value: school, label: school }))}
+        items={schools.map((school) => ({
+          value: school,
+          label: school === "全部" ? school : getSchoolDisplayLabel(school)
+        }))}
         selectedValue={selectedSchool}
-        displayValue={selectedSchool === "全部" ? "全部" : selectedSchool}
+        displayValue={
+          selectedSchool === "全部" ? "全部" : getSchoolDisplayLabel(selectedSchool)
+        }
         getHref={(school) => buildHref({ school }, "#school-section")}
       />
 

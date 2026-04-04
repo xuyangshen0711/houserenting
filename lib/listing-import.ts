@@ -1,4 +1,5 @@
 import { Area, LayoutType, PetPolicy } from "@prisma/client";
+import { supportedSchoolLabels } from "@/lib/listing-view-model";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -33,6 +34,13 @@ export type NormalizedImportedListing = {
 const areaAliasMap: Record<string, Area> = {
   BACK_BAY: Area.BACK_BAY,
   "BACK BAY": Area.BACK_BAY,
+  BEACON_HILL: Area.BEACON_HILL,
+  "BEACON HILL": Area.BEACON_HILL,
+  SEAPORT: Area.SEAPORT,
+  SOUTH_END: Area.SOUTH_END,
+  "SOUTH END": Area.SOUTH_END,
+  CHELSEA: Area.CHELSEA,
+  BRIGHTON: Area.BRIGHTON,
   EVERETT: Area.EVERETT,
   MALDEN: Area.MALDEN,
   ALLSTON: Area.ALLSTON,
@@ -55,6 +63,29 @@ const layoutAliasMap: Record<string, LayoutType> = {
   THREE_BED_TWO_BATH: LayoutType.THREE_BED_TWO_BATH,
   "3 BEDROOM": LayoutType.THREE_BED_TWO_BATH,
   "THREE BEDROOM": LayoutType.THREE_BED_TWO_BATH
+};
+
+const schoolAliasMap: Record<string, string> = {
+  "NORTHEASTERN UNIVERSITY": "Northeastern University",
+  "东北大学": "Northeastern University",
+  "BOSTON UNIVERSITY": "Boston University",
+  "波士顿大学": "Boston University",
+  "HARVARD UNIVERSITY": "Harvard University",
+  "哈佛大学": "Harvard University",
+  MIT: "Massachusetts Institute of Technology",
+  "MASSACHUSETTS INSTITUTE OF TECHNOLOGY": "Massachusetts Institute of Technology",
+  "麻省理工学院": "Massachusetts Institute of Technology",
+  "TUFTS UNIVERSITY": "Tufts University",
+  "塔夫茨大学": "Tufts University",
+  "BOSTON COLLEGE": "Boston College",
+  "波士顿学院": "Boston College",
+  "UMASS BOSTON": "University of Massachusetts Boston",
+  "UNIVERSITY OF MASSACHUSETTS BOSTON": "University of Massachusetts Boston",
+  "麻省大学波士顿分校": "University of Massachusetts Boston",
+  "BRANDEIS UNIVERSITY": "Brandeis University",
+  "布兰迪斯大学": "Brandeis University",
+  "SUFFOLK UNIVERSITY": "Suffolk University",
+  "萨福克大学": "Suffolk University"
 };
 
 function isRecord(value: unknown): value is UnknownRecord {
@@ -149,6 +180,19 @@ function normalizePromotions(value: unknown) {
 
   const text = asString(value);
   return text || null;
+}
+
+function normalizeNearbySchools(value: unknown) {
+  return [
+    ...new Set(
+      asStringArray(value)
+        .map((school) => {
+          const normalized = school.trim().toUpperCase();
+          return schoolAliasMap[normalized] ?? school;
+        })
+        .filter((school) => supportedSchoolLabels.includes(school))
+    )
+  ];
 }
 
 function slugify(parts: string[]) {
@@ -314,7 +358,9 @@ export function normalizeImportedListing(input: unknown): NormalizedImportedList
     acceptsUndergrad:
       input.acceptsUndergrad === undefined ? true : Boolean(input.acceptsUndergrad),
     isPublished: false,
-    nearbySchools: asStringArray(input.nearbySchools),
+    nearbySchools: normalizeNearbySchools(
+      input.nearbySchools ?? input.nearby_schools ?? input.schools
+    ),
     imageUrls: asStringArray(input.imageUrls),
     videoUrls: asStringArray(input.videoUrls),
     floorPlans

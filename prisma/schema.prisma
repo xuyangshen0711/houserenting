@@ -9,6 +9,11 @@ datasource db {
 
 enum Area {
   BACK_BAY
+  BEACON_HILL
+  SEAPORT
+  SOUTH_END
+  CHELSEA
+  BRIGHTON
   EVERETT
   MALDEN
   ALLSTON

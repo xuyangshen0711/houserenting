@@ -34,6 +34,11 @@ export type AdminListingRecord = {
 
 const areaLabelMap: Record<Area, string> = {
   BACK_BAY: "Back Bay",
+  BEACON_HILL: "Beacon Hill",
+  SEAPORT: "Seaport",
+  SOUTH_END: "South End",
+  CHELSEA: "Chelsea",
+  BRIGHTON: "Brighton",
   EVERETT: "Everett",
   MALDEN: "Malden",
   ALLSTON: "Allston",
@@ -44,6 +49,11 @@ const areaLabelMap: Record<Area, string> = {
 
 const areaTaglineMap: Record<Area, string> = {
   BACK_BAY: "通勤与城市氛围兼得",
+  BEACON_HILL: "经典波士顿街区，步行生活感强",
+  SEAPORT: "滨水新城，现代感和配套都在线",
+  SOUTH_END: "历史街区与餐饮氛围兼具",
+  CHELSEA: "预算更灵活，进城通勤方便",
+  BRIGHTON: "学生与年轻职场人都很友好",
   EVERETT: "精致独居，预算友好",
   MALDEN: "合租友好，节奏从容",
   ALLSTON: "校园生活圈，省心上手",
@@ -65,8 +75,13 @@ const petPolicyLabelMap: Record<PetPolicy, string> = {
   CATS_AND_DOGS: "猫狗均可"
 };
 
-const orderedAreaLabels = [
+export const supportedAreaLabels = [
   "Back Bay",
+  "Beacon Hill",
+  "Seaport",
+  "South End",
+  "Chelsea",
+  "Brighton",
   "Everett",
   "Malden",
   "Allston",
@@ -98,6 +113,10 @@ export const orderedSchoolLabels = [
   "School of the Museum of Fine Arts at Tufts",
   "Boston Architectural College"
 ];
+
+export const supportedSchoolLabels = orderedSchoolLabels.filter(
+  (school) => school !== "全部"
+);
 
 export const schoolShortLabelMap: Record<string, string> = {
   "Boston University": "BU",
@@ -152,7 +171,7 @@ export function getTagline(area: Area) {
 }
 
 export function getOrderedAreaLabels(selectedLabels: string[]) {
-  return orderedAreaLabels.filter((label) => selectedLabels.includes(label));
+  return supportedAreaLabels.filter((label) => selectedLabels.includes(label));
 }
 
 export function getOrderedSchoolLabels(selectedLabels: string[]) {
