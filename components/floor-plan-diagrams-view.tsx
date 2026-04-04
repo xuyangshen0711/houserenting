@@ -19,6 +19,12 @@ type FloorPlanImageCard = {
   roomSizeSqFt: number | null;
 };
 
+type PriceSummary = {
+  min: number;
+  max: number;
+  count: number;
+};
+
 const diagramCategories = [
   { value: "STUDIO", label: "Studio" },
   { value: "ONE_BED_ONE_BATH", label: "1B" },
@@ -27,13 +33,25 @@ const diagramCategories = [
   { value: "THREE_BED_TWO_BATH", label: "3B" }
 ] as const;
 
-function getPriceRange(floorPlans: FloorPlanViewModel[], layoutKey: string): string | null {
+function getPriceSummary(floorPlans: FloorPlanViewModel[], layoutKey: string): PriceSummary | null {
   const matching = floorPlans.filter((fp) => fp.layout === layoutKey);
   if (matching.length === 0) return null;
   const rents = matching.map((fp) => fp.monthlyRent);
-  const min = Math.min(...rents);
-  const max = Math.max(...rents);
-  return min === max ? `$${min.toLocaleString()}` : `$${min.toLocaleString()} – $${max.toLocaleString()}`;
+  return {
+    min: Math.min(...rents),
+    max: Math.max(...rents),
+    count: matching.length,
+  };
+}
+
+function formatPriceRange(summary: PriceSummary | null): string | null {
+  if (!summary) {
+    return null;
+  }
+
+  return summary.min === summary.max
+    ? `$${summary.min.toLocaleString()}`
+    : `$${summary.min.toLocaleString()} – $${summary.max.toLocaleString()}`;
 }
 
 function getSqftRange(floorPlans: FloorPlanViewModel[], layoutKey: string): string | null {
@@ -112,7 +130,7 @@ export function FloorPlanDiagramsView({ diagrams, floorPlans = [], showRentCard 
           <div className="mt-5 flex flex-wrap gap-2">
             {availableCategories.map((category) => {
               const isActive = activeTab === category.value;
-              const price = getPriceRange(floorPlans, category.value);
+              const price = formatPriceRange(getPriceSummary(floorPlans, category.value));
               const sqft = getSqftRange(floorPlans, category.value);
               return (
                 <button
@@ -194,8 +212,26 @@ export function FloorPlanDiagramsView({ diagrams, floorPlans = [], showRentCard 
                 <p className="text-sm text-slate-500">月租金</p>
                 <p className="mt-1 text-lg font-semibold text-slate-950">
                   {(() => {
-                    const range = getPriceRange(floorPlans, activeTab);
+                    const summary = getPriceSummary(floorPlans, activeTab);
+                    const range = formatPriceRange(summary);
                     return range ? `US$ ${range.replace(/\$/g, "")} / 月` : "价格待定";
+                  })()}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {(() => {
+                    const summary = getPriceSummary(floorPlans, activeTab);
+                    const activeLabel =
+                      diagramCategories.find((category) => category.value === activeTab)?.label ?? "当前户型";
+
+                    if (!summary) {
+                      return `${activeLabel} 还没有录入价格。`;
+                    }
+
+                    if (summary.count === 1) {
+                      return `当前只录入了 1 条 ${activeLabel} 价格；新增更多 ${activeLabel} 户型后，这里会自动显示最低价到最高价。`;
+                    }
+
+                    return `按当前 ${activeLabel} 分类下 ${summary.count} 条户型记录，自动显示最低价到最高价。`;
                   })()}
                 </p>
               </div>

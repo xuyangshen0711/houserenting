@@ -50,8 +50,8 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
   return (
     <main className="page-shell pb-20">
-      <section className="content-wrap pt-6 sm:pt-8">
-        <div className="flex items-center justify-between">
+      <section className="content-wrap pt-4 sm:pt-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/"
             className="glass-panel rounded-full px-4 py-3 text-sm font-medium text-slate-700"
@@ -62,19 +62,21 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         </div>
       </section>
 
-      <section className="content-wrap pt-10 sm:pt-14">
+      <section className="content-wrap pt-6 sm:pt-14">
         <div className="max-w-3xl">
           <p className="text-sm tracking-[0.2em] text-slate-500">房源详情</p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950 sm:text-6xl">
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:mt-4 sm:text-6xl">
             {listing.title}
           </h1>
-          <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">{listing.description}</p>
+          <p className="mt-4 line-clamp-4 text-sm leading-6 text-slate-600 sm:mt-5 sm:text-lg sm:leading-7">
+            {listing.description}
+          </p>
         </div>
       </section>
 
-      <section className="content-wrap pt-10">
+      <section className="content-wrap pt-6 sm:pt-10">
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="glass-panel relative min-h-[420px] overflow-hidden rounded-[2rem] md:col-span-2">
+          <div className="glass-panel relative min-h-[240px] overflow-hidden rounded-[2rem] sm:min-h-[320px] md:col-span-2 md:min-h-[420px]">
             <Image
               src={listing.imageUrls[0]}
               alt={listing.title}
@@ -83,18 +85,18 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
               sizes="(max-width: 768px) 100vw, 66vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
-            <div className="absolute bottom-6 right-6 max-w-[80%] text-right text-white">
+            <div className="absolute bottom-4 left-4 right-4 text-white sm:bottom-6 sm:right-6 sm:left-auto sm:max-w-[80%] sm:text-right">
               <span className="mb-3 inline-block rounded-full border border-white/20 bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur-md">
                 {listing.area}
               </span>
-              <h2 className="text-3xl font-black tracking-tight sm:text-4xl">{listing.title}</h2>
+              <h2 className="text-2xl font-black tracking-tight sm:text-4xl">{listing.title}</h2>
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-1">
             {listing.imageUrls.slice(1, 3).map((imageUrl, index) => (
               <div
                 key={`${listing.slug}-${index}`}
-                className="glass-panel relative min-h-[200px] overflow-hidden rounded-[2rem]"
+                className="glass-panel relative min-h-[120px] overflow-hidden rounded-[2rem] sm:min-h-[200px]"
               >
                 <Image
                   src={imageUrl}

@@ -20,7 +20,10 @@ export function ListingCard({ listing, index }: ListingCardProps) {
     >
       <div className="flex flex-col md:flex-row">
         {/* Master Image */}
-        <div className="relative w-full md:w-2/5 h-64 md:h-auto min-h-[320px]">
+        <Link
+          href={`/listings/${listing.slug}`}
+          className="relative block h-56 w-full min-h-[224px] md:h-auto md:w-2/5 md:min-h-[320px]"
+        >
           <Image
             src={listing.imageUrls[0] || "/placeholder-house.webp"}
             alt={listing.title}
@@ -28,11 +31,11 @@ export function ListingCard({ listing, index }: ListingCardProps) {
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 40vw"
           />
-        </div>
+        </Link>
 
         {/* Info & Floor Plans */}
         <div className="w-full md:w-3/5 p-6 md:p-8 flex flex-col">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-sm">
+          <div className="grid grid-cols-2 gap-4 mb-6 text-sm md:mb-8 md:grid-cols-4">
             <div>
               <p className="text-xs font-medium tracking-wide text-slate-400 mb-1">中介费</p>
               <p className="font-semibold text-slate-800">{listing.hasBrokerFee ? "有中介费" : "无中介费"}</p>
@@ -55,17 +58,17 @@ export function ListingCard({ listing, index }: ListingCardProps) {
             🚆 {listing.transitInfo}
           </div>
 
-          <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-400 mb-4 mt-auto">点击了解更多</h4>
+          <h4 className="mb-4 mt-auto text-sm font-semibold uppercase tracking-[0.12em] text-slate-400">点击了解更多</h4>
           <div className="space-y-3">
             <Link
               href={`/listings/${listing.slug}`}
-              className="group flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-white/40 bg-white/50 backdrop-blur-sm transition duration-200 hover:scale-[1.015] hover:bg-white/75 hover:border-white/60 hover:shadow-float"
+              className="group flex flex-col justify-between rounded-xl border border-white/40 bg-white/50 p-4 transition duration-200 hover:scale-[1.015] hover:border-white/60 hover:bg-white/75 hover:shadow-float md:flex-row md:items-center"
             >
-              <div className="flex items-center gap-4">
+              <div className="flex items-start gap-4 md:items-center">
                 <span className="border border-slate-200 bg-white text-slate-700 px-3 py-1 rounded-lg text-sm font-bold shadow-sm transition-transform duration-200 group-hover:scale-105">
                   {listing.area}
                 </span>
-                <div>
+                <div className="min-w-0">
                   <p className="font-semibold text-slate-900">{listing.title}</p>
                   <p className="text-xs font-light text-slate-500 mt-1">
                     {listing.floorPlans.length
@@ -74,7 +77,7 @@ export function ListingCard({ listing, index }: ListingCardProps) {
                   </p>
                 </div>
               </div>
-              <div className="mt-3 md:mt-0 flex items-center md:justify-end gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2 md:mt-0 md:justify-end">
                 <span className="text-sm font-medium text-slate-500">Starting from</span>
                 <span className="text-lg font-black text-slate-900">
                   ${listing.monthlyRent.toLocaleString()}

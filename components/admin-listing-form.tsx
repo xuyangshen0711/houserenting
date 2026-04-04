@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CloudinaryUploader } from "@/components/cloudinary-uploader";
 import {
@@ -218,14 +217,10 @@ export function AdminListingForm({
             </select>
           </label>
         </div>
-        <div className="grid gap-5 md:grid-cols-3 mt-5">
+        <div className="grid gap-5 md:grid-cols-2 mt-5">
            <label className="flex items-center justify-between rounded-[1.5rem] border bg-white/70 px-4 py-4">
               <span className="text-sm font-medium">包含中介费</span>
               <input type="checkbox" checked={form.hasBrokerFee} onChange={(e) => updateField("hasBrokerFee", e.target.checked)} />
-           </label>
-           <label className="flex items-center justify-between rounded-[1.5rem] border bg-white/70 px-4 py-4">
-              <span className="text-sm font-medium">接受本科生</span>
-              <input type="checkbox" checked={form.acceptsUndergrad} onChange={(e) => updateField("acceptsUndergrad", e.target.checked)} />
            </label>
            <label className="flex items-center justify-between rounded-[1.5rem] border bg-white/70 px-4 py-4">
               <span className="text-sm font-medium">上架展示</span>
@@ -295,20 +290,6 @@ export function AdminListingForm({
              </p>
            ) : null}
         </div>
-        {initialData ? (
-          <div className="mt-5 rounded-[1.5rem] border border-slate-200 bg-white/70 p-4">
-            <p className="text-sm font-medium text-slate-800">当前编辑入口</p>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              缺主图的房源会在后台“待补全”列表中直接跳转到这里。
-            </p>
-            <Link
-              href={`/admin/listings/${initialData.id}`}
-              className="mt-3 inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              打开独立编辑页
-            </Link>
-          </div>
-        ) : null}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 p-4">
