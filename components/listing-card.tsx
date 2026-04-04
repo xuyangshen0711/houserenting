@@ -28,22 +28,6 @@ export function ListingCard({ listing, index }: ListingCardProps) {
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 40vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/15 to-transparent md:bg-gradient-to-r md:from-slate-950/55 md:via-slate-950/10 md:to-transparent" />
-
-          <div className="absolute bottom-6 right-6 max-w-[85%] text-right text-white">
-            <span className="mb-3 inline-block rounded-full border border-white/25 bg-slate-950/45 px-3 py-1 text-xs font-medium backdrop-blur-md shadow-lg">
-              {listing.area}
-            </span>
-            <div className="inline-block rounded-2xl bg-slate-950/48 px-4 py-3 shadow-xl backdrop-blur-md">
-              <h3 className="text-3xl font-black tracking-tight leading-none">{listing.title}</h3>
-              <p className="mt-2 text-sm font-light text-white/85">{listing.address}</p>
-            </div>
-            {listing.promotions && (
-              <p className="mt-3 inline-block rounded-md bg-emerald-950/65 px-2 py-1 text-sm font-semibold text-emerald-300 shadow-lg">
-                🎁 {listing.promotions}
-              </p>
-            )}
-          </div>
         </div>
 
         {/* Info & Floor Plans */}
@@ -79,7 +63,7 @@ export function ListingCard({ listing, index }: ListingCardProps) {
             >
               <div className="flex items-center gap-4">
                 <span className="border border-slate-200 bg-white text-slate-700 px-3 py-1 rounded-lg text-sm font-bold shadow-sm transition-transform duration-200 group-hover:scale-105">
-                  Home
+                  {listing.area}
                 </span>
                 <div>
                   <p className="font-semibold text-slate-900">{listing.title}</p>
