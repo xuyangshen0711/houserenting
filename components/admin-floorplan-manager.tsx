@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CloudinaryUploader } from "@/components/cloudinary-uploader";
 import { optimizeCloudinaryUrl } from "@/lib/cloudinary-optimization";
 import type { AdminListingRecord, FloorPlanSource } from "@/lib/listing-view-model";
@@ -30,22 +30,41 @@ const initialFloorPlanState: FloorPlanState = {
   imageUrls: []
 };
 
-// Map Prisma LayoutType to standard UI strings
-const layoutLabels: Record<string, string> = {
-  STUDIO: "Studio",
-  ONE_BED_ONE_BATH: "1B1B",
-  TWO_BED_TWO_BATH: "2B2B",
-  THREE_BED_TWO_BATH: "3B2B"
-};
+const layoutSections = [
+  { value: "STUDIO", label: "Studio", shortLabel: "Studio" },
+  { value: "ONE_BED_ONE_BATH", label: "1 Bedroom", shortLabel: "1B" },
+  { value: "TWO_BED_TWO_BATH", label: "2 Bedroom", shortLabel: "2B" },
+  { value: "THREE_BED_TWO_BATH", label: "3 Bedroom", shortLabel: "3B" }
+] as const;
+
+const layoutLabels = Object.fromEntries(
+  layoutSections.map((section) => [section.value, section.shortLabel])
+) as Record<string, string>;
 
 export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloorPlanManagerProps) {
   const [floorPlans, setFloorPlans] = useState<FloorPlanSource[]>(property.floorPlans);
   const [editingPlan, setEditingPlan] = useState<FloorPlanState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState("");
+  const [selectedLayoutFilter, setSelectedLayoutFilter] = useState<string>("ALL");
 
-  function startCreate() {
-    setEditingPlan({ ...initialFloorPlanState });
+  const floorPlansByLayout = useMemo(() => {
+    return layoutSections.map((section) => ({
+      ...section,
+      floorPlans: floorPlans
+        .filter((plan) => plan.layout === section.value)
+        .sort((a, b) => a.monthlyRent - b.monthlyRent)
+    }));
+  }, [floorPlans]);
+
+  const visibleLayoutSections = useMemo(() => {
+    return floorPlansByLayout.filter((section) =>
+      selectedLayoutFilter === "ALL" ? section.floorPlans.length > 0 : section.value === selectedLayoutFilter
+    );
+  }, [floorPlansByLayout, selectedLayoutFilter]);
+
+  function startCreate(layout = initialFloorPlanState.layout) {
+    setEditingPlan({ ...initialFloorPlanState, layout });
     setStatus("");
   }
 
@@ -144,41 +163,118 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
         
         {!editingPlan ? (
           <div>
-            <div className="mb-6 flex justify-between items-center">
+            <div className="mb-6 rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-950">按户型分类管理</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    先选分类再录入，会比从一堆户型里翻找更顺手。用户前台看到的 Studio、1B、2B、3B 也会更统一。
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {layoutSections.map((section) => (
+                    <button
+                      key={`quick-create-${section.value}`}
+                      type="button"
+                      onClick={() => startCreate(section.value)}
+                      className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition-colors"
+                    >
+                      + 新增 {section.shortLabel}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <h3 className="text-lg font-semibold">现有户型列表</h3>
-              <button onClick={startCreate} className="px-4 py-2 bg-slate-900 text-white rounded-full text-sm font-medium hover:bg-slate-800 transition-colors">
-                + 新增户型
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedLayoutFilter("ALL")}
+                  className={[
+                    "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+                    selectedLayoutFilter === "ALL"
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  ].join(" ")}
+                >
+                  全部
+                </button>
+                {layoutSections.map((section) => {
+                  const count = floorPlansByLayout.find((item) => item.value === section.value)?.floorPlans.length ?? 0;
+                  return (
+                    <button
+                      key={`filter-${section.value}`}
+                      type="button"
+                      onClick={() => setSelectedLayoutFilter(section.value)}
+                      className={[
+                        "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+                        selectedLayoutFilter === section.value
+                          ? "border-slate-900 bg-slate-900 text-white"
+                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                      ].join(" ")}
+                    >
+                      {section.shortLabel} · {count}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {floorPlans.length === 0 ? (
               <div className="text-center p-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                 <p className="text-slate-400 mb-4">当前尚未添加任何户型数据。</p>
-                <button onClick={startCreate} className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 shadow-sm rounded-full text-sm font-medium hover:bg-slate-50">
-                  立即创建第一个户型
-                </button>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {floorPlans.map((fp) => (
-                  <div key={fp.id} className="relative p-5 border border-slate-200 rounded-2xl hover:border-slate-300 transition-all bg-white group">
-                    <div className="font-bold text-lg mb-1">{fp.name || "未命名"}</div>
-                    <div className="text-sm text-slate-500 mb-4">
-                       <span className="inline-block bg-slate-100 px-2.5 py-0.5 rounded-full text-xs font-semibold mr-2">{layoutLabels[fp.layout]}</span>
-                       ${fp.monthlyRent} / 月 {fp.roomSizeSqFt ? `· ${fp.roomSizeSqFt} sq.ft` : ""}
+              <div className="space-y-8">
+                {visibleLayoutSections.map((section) => (
+                  <section key={section.value}>
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <h4 className="text-base font-semibold text-slate-950">{section.label}</h4>
+                        <p className="mt-1 text-sm text-slate-500">
+                          当前 {section.floorPlans.length} 个 {section.shortLabel} 户型
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => startCreate(section.value)}
+                        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                      >
+                        + 新增 {section.shortLabel}
+                      </button>
                     </div>
-                    {fp.imageUrls.length > 0 ? (
-                      <div className="w-full h-32 bg-slate-100 rounded-xl mb-4 overflow-hidden">
-                        <img src={optimizeCloudinaryUrl(fp.imageUrls[0], "c_fill,h_300,f_auto,q_auto")} alt="封面" className="w-full h-full object-cover" />
+
+                    {section.floorPlans.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-400">
+                        这个分类下还没有户型，点击右上角即可新增。
                       </div>
                     ) : (
-                      <div className="w-full h-32 bg-slate-50 rounded-xl mb-4 flex items-center justify-center text-slate-400 text-xs border border-dashed border-slate-200">无图片</div>
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {section.floorPlans.map((fp) => (
+                          <div key={fp.id} className="relative rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-slate-300 group">
+                            <div className="mb-1 text-lg font-bold">{fp.name || "未命名"}</div>
+                            <div className="mb-4 text-sm text-slate-500">
+                               <span className="mr-2 inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold">{layoutLabels[fp.layout]}</span>
+                               ${fp.monthlyRent} / 月 {fp.roomSizeSqFt ? `· ${fp.roomSizeSqFt} sq.ft` : ""}
+                            </div>
+                            {fp.imageUrls.length > 0 ? (
+                              <div className="mb-4 h-32 w-full overflow-hidden rounded-xl bg-slate-100">
+                                <img src={optimizeCloudinaryUrl(fp.imageUrls[0], "c_fill,h_300,f_auto,q_auto")} alt="封面" className="h-full w-full object-cover" />
+                              </div>
+                            ) : (
+                              <div className="mb-4 flex h-32 w-full items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-xs text-slate-400">无图片</div>
+                            )}
+                            <div className="flex gap-2">
+                               <button onClick={() => startEdit(fp)} className="flex-1 rounded-lg bg-slate-100 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200">编辑</button>
+                               <button onClick={() => handleDelete(fp.id)} className="flex-1 rounded-lg bg-red-50 py-2 text-sm font-medium text-red-600 hover:bg-red-100">删除</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     )}
-                    <div className="flex gap-2">
-                       <button onClick={() => startEdit(fp)} className="flex-1 py-2 bg-slate-100 rounded-lg text-sm font-medium hover:bg-slate-200 text-slate-700">编辑</button>
-                       <button onClick={() => handleDelete(fp.id)} className="flex-1 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100">删除</button>
-                    </div>
-                  </div>
+                  </section>
                 ))}
               </div>
             )}
@@ -196,12 +292,13 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
               </label>
               
               <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">户型结构 (Layout)</span>
+                <span className="mb-2 block text-sm font-medium text-slate-700">户型分类</span>
                 <select value={editingPlan.layout} onChange={(e) => updateField("layout", e.target.value)} className="w-full rounded-2xl border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900">
-                  <option value="STUDIO">Studio</option>
-                  <option value="ONE_BED_ONE_BATH">1B1B</option>
-                  <option value="TWO_BED_TWO_BATH">2B2B</option>
-                  <option value="THREE_BED_TWO_BATH">3B2B</option>
+                  {layoutSections.map((section) => (
+                    <option key={section.value} value={section.value}>
+                      {section.label} ({section.shortLabel})
+                    </option>
+                  ))}
                 </select>
               </label>
               

@@ -71,36 +71,33 @@ export function ListingCard({ listing, index }: ListingCardProps) {
             🚆 {listing.transitInfo}
           </div>
 
-          <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-400 mb-4 mt-auto">可选户型</h4>
+          <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-400 mb-4 mt-auto">点击了解更多</h4>
           <div className="space-y-3">
-            {listing.floorPlans.map((fp) => (
-              <Link
-                key={fp.id}
-                href={`/listings/${listing.slug}?layout=${fp.layoutLabel}`}
-                className="group flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-white/40 bg-white/50 backdrop-blur-sm transition duration-200 hover:scale-[1.015] hover:bg-white/75 hover:border-white/60 hover:shadow-float"
-              >
-                <div className="flex items-center gap-4">
-                  <span className="border border-slate-200 bg-white text-slate-700 px-3 py-1 rounded-lg text-sm font-bold shadow-sm transition-transform duration-200 group-hover:scale-105">
-                    {fp.layoutLabel}
-                  </span>
-                  <div>
-                    <p className="font-semibold text-slate-900">{fp.name}</p>
-                    <p className="text-xs font-light text-slate-500 mt-1">
-                      {fp.roomSizeSqFt ? `${fp.roomSizeSqFt} sq.ft` : "面积待定"} · {fp.isFurnished ? "包家具" : "无家具"}
-                    </p>
-                  </div>
+            <Link
+              href={`/listings/${listing.slug}`}
+              className="group flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-white/40 bg-white/50 backdrop-blur-sm transition duration-200 hover:scale-[1.015] hover:bg-white/75 hover:border-white/60 hover:shadow-float"
+            >
+              <div className="flex items-center gap-4">
+                <span className="border border-slate-200 bg-white text-slate-700 px-3 py-1 rounded-lg text-sm font-bold shadow-sm transition-transform duration-200 group-hover:scale-105">
+                  Home
+                </span>
+                <div>
+                  <p className="font-semibold text-slate-900">{listing.title}</p>
+                  <p className="text-xs font-light text-slate-500 mt-1">
+                    {listing.floorPlans.length
+                      ? `${listing.floorPlans.length} 种户型可选`
+                      : "房型信息待补充"}
+                  </p>
                 </div>
-                <div className="mt-3 md:mt-0 flex items-center md:justify-end gap-2">
-                  <span className="text-lg font-black text-slate-900">
-                    ${fp.monthlyRent.toLocaleString()}
-                  </span>
-                  <span className="text-sm font-light text-slate-400">/ 月</span>
-                </div>
-              </Link>
-            ))}
-            {listing.floorPlans.length === 0 && (
-              <p className="text-sm font-light text-slate-400">当前没有放出的房型。</p>
-            )}
+              </div>
+              <div className="mt-3 md:mt-0 flex items-center md:justify-end gap-2">
+                <span className="text-sm font-medium text-slate-500">Starting from</span>
+                <span className="text-lg font-black text-slate-900">
+                  ${listing.monthlyRent.toLocaleString()}
+                </span>
+                <span className="text-sm font-light text-slate-400">/ 月</span>
+              </div>
+            </Link>
           </div>
         </div>
       </div>
