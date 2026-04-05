@@ -149,10 +149,14 @@ export function ListingCard({ listing, index }: ListingCardProps) {
             </div>
             <div className="shrink-0 text-right">
               <p className="text-xs font-medium tracking-[0.08em] text-slate-400">起始价格</p>
-              <p className="mt-1 whitespace-nowrap text-xl font-black text-slate-950">
-                ${listing.monthlyRent.toLocaleString()}
-                <span className="ml-1 text-sm font-medium text-slate-400">/ 月</span>
-              </p>
+              {listing.monthlyRent > 0 ? (
+                <p className="mt-1 whitespace-nowrap text-xl font-black text-slate-950">
+                  ${listing.monthlyRent.toLocaleString()}
+                  <span className="ml-1 text-sm font-medium text-slate-400">/ 月</span>
+                </p>
+              ) : (
+                <p className="mt-1 whitespace-nowrap text-xl font-black text-slate-950">Ask for price</p>
+              )}
             </div>
           </Link>
 
@@ -195,11 +199,17 @@ export function ListingCard({ listing, index }: ListingCardProps) {
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2 md:mt-0 md:justify-end">
-                <span className="text-sm font-medium text-slate-500">Starting from</span>
-                <span className="text-lg font-black text-slate-900">
-                  ${listing.monthlyRent.toLocaleString()}
-                </span>
-                <span className="text-sm font-light text-slate-400">/ 月</span>
+                {listing.monthlyRent > 0 ? (
+                  <>
+                    <span className="text-sm font-medium text-slate-500">Starting from</span>
+                    <span className="text-lg font-black text-slate-900">
+                      ${listing.monthlyRent.toLocaleString()}
+                    </span>
+                    <span className="text-sm font-light text-slate-400">/ 月</span>
+                  </>
+                ) : (
+                  <span className="text-lg font-black text-slate-900">Ask for price</span>
+                )}
               </div>
             </Link>
 

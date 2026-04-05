@@ -298,8 +298,9 @@ export function mapToListingViewModel(property: ListingSource): ListingViewModel
     imageUrls: fp.imageUrls
   }));
 
-  const minRent = mappedFloorPlans.length > 0 
-    ? Math.min(...mappedFloorPlans.map(fp => fp.monthlyRent))
+  const pricedPlans = mappedFloorPlans.filter(fp => fp.monthlyRent > 0);
+  const minRent = pricedPlans.length > 0
+    ? Math.min(...pricedPlans.map(fp => fp.monthlyRent))
     : 0;
 
   return {

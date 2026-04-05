@@ -36,11 +36,13 @@ const diagramCategories = [
 function getPriceSummary(floorPlans: FloorPlanViewModel[], layoutKey: string): PriceSummary | null {
   const matching = floorPlans.filter((fp) => fp.layout === layoutKey);
   if (matching.length === 0) return null;
-  const rents = matching.map((fp) => fp.monthlyRent);
+  const priced = matching.filter((fp) => fp.monthlyRent > 0);
+  if (priced.length === 0) return null;
+  const rents = priced.map((fp) => fp.monthlyRent);
   return {
     min: Math.min(...rents),
     max: Math.max(...rents),
-    count: matching.length,
+    count: priced.length,
   };
 }
 
@@ -238,9 +240,9 @@ export function FloorPlanDiagramsView({ diagrams, floorPlans = [], showRentCard 
                         {card.name ?? "该户型"}
                       </p>
                       <p className="mt-1 text-xs text-slate-500">
-                        {card.monthlyRent !== null
+                        {card.monthlyRent !== null && card.monthlyRent > 0
                           ? `$${card.monthlyRent.toLocaleString()} / 月`
-                          : "价格待补充"}
+                          : "Ask for price"}
                       </p>
                     </div>
                     <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600">
