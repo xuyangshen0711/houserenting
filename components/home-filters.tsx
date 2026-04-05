@@ -37,7 +37,8 @@ function FilterPills({
   items,
   selectedValue,
   getHref,
-  displayValue
+  displayValue,
+  rows
 }: {
   id: string;
   title: string;
@@ -45,7 +46,37 @@ function FilterPills({
   selectedValue: string;
   getHref: (value: string) => string;
   displayValue: string;
+  rows?: number;
 }) {
+  const renderPill = (item: FilterItem) => {
+    const isActive = selectedValue === item.value;
+    return (
+      <Link key={item.value} href={getHref(item.value)} scroll={false}>
+        <motion.span
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.97 }}
+          className={[
+            "inline-flex rounded-full px-5 py-2.5 text-sm font-medium transition-shadow duration-200",
+            isActive
+              ? "bg-gradient-to-r from-violet-600 to-sky-500 text-white shadow-float"
+              : "border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+          ].join(" ")}
+        >
+          {item.label}
+        </motion.span>
+      </Link>
+    );
+  };
+
+  // Split items evenly into the requested number of rows
+  const rowGroups: FilterItem[][] = [];
+  if (rows && rows > 1) {
+    const perRow = Math.ceil(items.length / rows);
+    for (let i = 0; i < rows; i++) {
+      rowGroups.push(items.slice(i * perRow, (i + 1) * perRow));
+    }
+  }
+
   return (
     <section id={id} className="scroll-mt-28 rounded-[2rem] p-6" style={cardStyle}>
       <div className="flex items-center justify-between gap-4">
@@ -53,28 +84,20 @@ function FilterPills({
         <p className="text-xs font-light tracking-wide text-slate-500">当前：{displayValue}</p>
       </div>
 
-      <div className="scrollbar-hidden mt-6 overflow-x-auto pb-2">
-        <div className="flex min-w-max gap-3">
-          {items.map((item) => {
-            const isActive = selectedValue === item.value;
-            return (
-              <Link key={item.value} href={getHref(item.value)} scroll={false}>
-                <motion.span
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.97 }}
-                  className={[
-                    "inline-flex rounded-full px-5 py-2.5 text-sm font-medium transition-shadow duration-200",
-                    isActive
-                      ? "bg-gradient-to-r from-violet-600 to-sky-500 text-white shadow-float"
-                      : "border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-                  ].join(" ")}
-                >
-                  {item.label}
-                </motion.span>
-              </Link>
-            );
-          })}
-        </div>
+      <div className="mt-6">
+        {rowGroups.length > 0 ? (
+          <div className="space-y-3">
+            {rowGroups.map((group, idx) => (
+              <div key={idx} className="flex flex-wrap gap-3">
+                {group.map(renderPill)}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-3">
+            {items.map(renderPill)}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -218,6 +241,7 @@ export function HomeFilters({
         selectedValue={selectedArea}
         displayValue={selectedArea}
         getHref={(area) => buildHref({ area }, "#area-section")}
+        rows={2}
       />
 
       <FilterPills
