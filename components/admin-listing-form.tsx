@@ -257,6 +257,7 @@ export function AdminListingForm({
               <option value="CAMBRIDGE">Cambridge</option>
               <option value="SOMERVILLE">Somerville</option>
               <option value="BROOKLINE">Brookline</option>
+              <option value="BOSTON">Boston</option>
             </select>
           </label>
         </div>

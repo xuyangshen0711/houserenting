@@ -46,7 +46,8 @@ const areaAliasMap: Record<string, Area> = {
   ALLSTON: Area.ALLSTON,
   CAMBRIDGE: Area.CAMBRIDGE,
   SOMERVILLE: Area.SOMERVILLE,
-  BROOKLINE: Area.BROOKLINE
+  BROOKLINE: Area.BROOKLINE,
+  BOSTON: Area.BOSTON
 };
 
 const layoutAliasMap: Record<string, LayoutType> = {

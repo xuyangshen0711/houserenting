@@ -20,6 +20,7 @@ enum Area {
   CAMBRIDGE
   SOMERVILLE
   BROOKLINE
+  BOSTON
 }
 
 enum LayoutType {

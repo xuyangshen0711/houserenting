@@ -45,7 +45,8 @@ const areaLabelMap: Record<Area, string> = {
   ALLSTON: "Allston",
   CAMBRIDGE: "Cambridge",
   SOMERVILLE: "Somerville",
-  BROOKLINE: "Brookline"
+  BROOKLINE: "Brookline",
+  BOSTON: "Boston"
 };
 
 const areaTaglineMap: Record<Area, string> = {
@@ -60,7 +61,8 @@ const areaTaglineMap: Record<Area, string> = {
   ALLSTON: "校园生活圈，省心上手",
   CAMBRIDGE: "学术氛围与生活质感并存",
   SOMERVILLE: "生活密度高，街区感鲜明",
-  BROOKLINE: "适合稳定长期居住"
+  BROOKLINE: "适合稳定长期居住",
+  BOSTON: "波士顿市中心，生活便利配套齐全"
 };
 
 const layoutLabelMap: Record<LayoutType, string> = {
@@ -91,7 +93,8 @@ export const supportedAreaLabels = [
   "Allston",
   "Cambridge",
   "Somerville",
-  "Brookline"
+  "Brookline",
+  "Boston"
 ];
 
 export const orderedSchoolLabels = [
