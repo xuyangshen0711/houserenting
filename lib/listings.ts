@@ -73,6 +73,7 @@ export async function getFeaturedListings(
   selectedArea = "全部",
   selectedSchool = "全部",
   sort: RentSortValue = "default",
+  searchQuery = "",
   minRent?: number,
   maxRent?: number
 ) {
@@ -83,6 +84,7 @@ export async function getFeaturedListings(
 
   try {
     const areaEnum = selectedArea === "全部" ? null : getAreaEnum(selectedArea);
+    const normalizedSearchQuery = searchQuery.trim();
     const properties = await prisma.property.findMany({
       where: {
         isPublished: true,
@@ -92,6 +94,30 @@ export async function getFeaturedListings(
               nearbySchools: {
                 has: selectedSchool
               }
+            }
+          : {}),
+        ...(normalizedSearchQuery
+          ? {
+              OR: [
+                {
+                  name: {
+                    contains: normalizedSearchQuery,
+                    mode: "insensitive"
+                  }
+                },
+                {
+                  address: {
+                    contains: normalizedSearchQuery,
+                    mode: "insensitive"
+                  }
+                },
+                {
+                  slug: {
+                    contains: normalizedSearchQuery,
+                    mode: "insensitive"
+                  }
+                }
+              ]
             }
           : {}),
         ...(minRent !== undefined || maxRent !== undefined

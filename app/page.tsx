@@ -13,6 +13,7 @@ type HomePageProps = {
     area?: string;
     school?: string;
     sort?: RentSortValue;
+    q?: string;
     minRent?: string;
     maxRent?: string;
   }>;
@@ -22,6 +23,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const params = (await searchParams) ?? {};
   const selectedArea = params.area ?? "全部";
   const selectedSort = params.sort ?? "default";
+  const searchQuery = params.q?.trim() ?? "";
   const minRent = params.minRent ?? "";
   const maxRent = params.maxRent ?? "";
   const parsedMinRent = minRent ? Number(minRent) : undefined;
@@ -34,6 +36,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     selectedArea,
     selectedSchool,
     selectedSort,
+    searchQuery,
     Number.isFinite(parsedMinRent) ? parsedMinRent : undefined,
     Number.isFinite(parsedMaxRent) ? parsedMaxRent : undefined
   );
@@ -49,6 +52,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     minRent || maxRent
       ? `${minRent || "不限"} - ${maxRent || "不限"}`
       : "未设置预算";
+  const searchSummary = searchQuery ? `搜索：${searchQuery}` : "未搜索公寓";
 
   return (
     <main className="page-shell pb-20">
@@ -75,7 +79,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </h2>
           </div>
           <p className="hidden text-xs font-light tracking-wide text-slate-400 sm:block">
-            当前：{selectedArea} · {selectedSchool} · {rentSummary} · {budgetSummary}
+            当前：{selectedArea} · {selectedSchool} · {rentSummary} · {budgetSummary} · {searchSummary}
           </p>
         </div>
 
@@ -85,6 +89,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           selectedArea={selectedArea}
           selectedSchool={selectedSchool}
           selectedSort={selectedSort}
+          searchQuery={searchQuery}
           minRent={minRent}
           maxRent={maxRent}
         />
@@ -100,9 +105,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </div>
         ) : (
           <div className="glass-filter rounded-[2rem] p-8 text-center">
-            <p className="text-lg font-bold text-slate-950">这个区域暂时还没有已发布房源</p>
+            <p className="text-lg font-bold text-slate-950">
+              {searchQuery ? "没有找到匹配的公寓" : "这个区域暂时还没有已发布房源"}
+            </p>
             <p className="mt-3 text-sm font-light leading-7 text-slate-500">
-              你可以切换其他区域看看，或者稍后再回来刷新。后台新增并上架后，这里会自动出现。
+              {searchQuery
+                ? "可以试试换个公寓名、地址关键词，或者清空搜索后再配合区域和预算筛选。"
+                : "你可以切换其他区域看看，或者稍后再回来刷新。后台新增并上架后，这里会自动出现。"}
             </p>
           </div>
         )}

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { PencilLine, Power, Trash2, LayoutDashboard } from "lucide-react";
+import { useDeferredValue, useMemo, useState } from "react";
+import { PencilLine, Power, Trash2, LayoutDashboard, Search, X } from "lucide-react";
 import { AdminListingForm } from "@/components/admin-listing-form";
 import { AdminFloorPlanManager } from "@/components/admin-floorplan-manager";
 import {
@@ -26,6 +26,8 @@ export function AdminDashboard({
   const [editingListingFull, setEditingListingFull] = useState<AdminListingRecord | null>(null);
   const [status, setStatus] = useState("");
   const [pendingId, setPendingId] = useState("");
+  const [listingSearch, setListingSearch] = useState("");
+  const deferredListingSearch = useDeferredValue(listingSearch);
 
   const summary = useMemo(() => {
     const published = listings.filter((listing) => listing.isPublished).length;
@@ -41,6 +43,32 @@ export function AdminDashboard({
   const incompleteListings = useMemo(
     () => listings.filter((listing) => listing.imageUrls.length === 0),
     [listings]
+  );
+
+  const filteredListings = useMemo(() => {
+    const normalizedSearch = deferredListingSearch.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+      return listings;
+    }
+
+    return listings.filter((listing) => {
+      const searchableText = [
+        listing.name,
+        listing.address,
+        listing.slug,
+        getAreaLabel(listing.area)
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(normalizedSearch);
+    });
+  }, [deferredListingSearch, listings]);
+
+  const filteredIncompleteListings = useMemo(
+    () => filteredListings.filter((listing) => listing.imageUrls.length === 0),
+    [filteredListings]
   );
 
   function syncListingFloorPlans(id: string, nextFloorPlans: AdminListingRecord["floorPlans"]) {
@@ -188,13 +216,13 @@ export function AdminDashboard({
         </div>
       </div>
 
-      {incompleteListings.length ? (
+      {filteredIncompleteListings.length ? (
         <section className="rounded-[2rem] border border-amber-200 bg-amber-50/80 p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="section-label text-amber-700">待补全</p>
               <h2 className="mt-3 text-2xl font-semibold tracking-tight text-amber-950">
-                还有 {summary.missingImages} 个房源缺少主图
+                还有 {filteredIncompleteListings.length} 个房源缺少主图
               </h2>
               <p className="mt-3 text-sm leading-6 text-amber-900/80">
                 这些房源已经在数据库里，但还不适合发布。点进编辑页上传主图后，图片链接会自动写回数据库。
@@ -203,7 +231,7 @@ export function AdminDashboard({
           </div>
 
           <div className="mt-5 space-y-3">
-            {incompleteListings.map((listing) => (
+            {filteredIncompleteListings.map((listing) => (
               <div
                 key={`incomplete-${listing.id}`}
                 className="flex flex-col gap-3 rounded-[1.5rem] border border-amber-200 bg-white/80 p-4 sm:flex-row sm:items-center sm:justify-between"
@@ -260,19 +288,43 @@ export function AdminDashboard({
       </section>
 
       <section>
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="section-label">公寓管理</p>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
               已录入的公寓名录
             </h2>
           </div>
-          {status ? <p className="text-sm text-slate-500">{status}</p> : null}
+          <div className="flex w-full max-w-xl flex-col gap-3 lg:items-end">
+            {status ? <p className="text-sm text-slate-500">{status}</p> : null}
+            <div className="flex w-full items-center gap-3">
+              <label className="relative flex-1">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={listingSearch}
+                  onChange={(event) => setListingSearch(event.target.value)}
+                  placeholder="搜索公寓名、地址或 slug"
+                  className="w-full rounded-2xl border border-slate-200 bg-white/85 py-3 pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => setListingSearch("")}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/85 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <X className="h-4 w-4" />
+                清空
+              </button>
+            </div>
+            <p className="text-xs font-light tracking-wide text-slate-400">
+              当前显示 {filteredListings.length} / {listings.length} 个公寓
+            </p>
+          </div>
         </div>
 
         <div className="mt-6 space-y-4">
-          {listings.length ? (
-            listings.map((listing) => (
+          {filteredListings.length ? (
+            filteredListings.map((listing) => (
               <div key={listing.id} className="glass-panel rounded-[2rem] p-5 sm:p-6">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 flex-1">
@@ -368,9 +420,13 @@ export function AdminDashboard({
             ))
           ) : (
             <div className="glass-panel rounded-[2rem] p-8 text-center">
-              <p className="text-lg font-semibold text-slate-950">还没有房源</p>
+              <p className="text-lg font-semibold text-slate-950">
+                {listingSearch.trim() ? "没有找到匹配的公寓" : "还没有房源"}
+              </p>
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                你可以先在上面的表单里新建一个公寓大楼。保存成功后，下方会列出大楼信息，点击"管理户型"即可录入具体房间。
+                {listingSearch.trim()
+                  ? "试试输入别的公寓名、地址或 slug，列表会即时更新。"
+                  : "你可以先在上面的表单里新建一个公寓大楼。保存成功后，下方会列出大楼信息，点击\"管理户型\"即可录入具体房间。"}
               </p>
             </div>
           )}
