@@ -49,7 +49,9 @@ const initialState: AdminListingFormState = {
   videoUrls: []
 };
 
-function getFormStateFromListing(listing: AdminListingRecord): AdminListingFormState {
+function getFormStateFromListing(
+  listing: AdminListingRecord
+): AdminListingFormState {
   return {
     name: listing.name,
     slug: listing.slug,
@@ -85,6 +87,7 @@ export function AdminListingForm({
       setStatus("");
       return;
     }
+
     setForm(initialState);
     setStatus("");
   }, [initialData]);
@@ -148,12 +151,6 @@ export function AdminListingForm({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("");
-
-    if (!form.imageUrls.length) {
-      setStatus("请至少上传 1 张大楼/公寓照片。");
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -166,11 +163,23 @@ export function AdminListingForm({
       });
       const result = await response.json();
 
-      if (!response.ok) throw new Error(result.message ?? "提交失败");
+      if (!response.ok) {
+        throw new Error(result.message ?? "提交失败");
+      }
 
       const mode = initialData ? "edit" : "create";
-      setStatus(mode === "create" ? "大楼信息已提交成功。" : "大楼信息已更新。");
-      if (!initialData) setForm(initialState);
+      setStatus(
+        mode === "create"
+          ? form.imageUrls.length
+            ? "公寓已保存。"
+            : "公寓已入库，后面再补主图也可以。"
+          : "公寓已更新。"
+      );
+
+      if (!initialData) {
+        setForm(initialState);
+      }
+
       onSuccess?.(result.listing, mode);
     } catch (submitError) {
       setStatus(submitError instanceof Error ? submitError.message : "提交失败");
@@ -181,27 +190,61 @@ export function AdminListingForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="glass-panel p-5 sm:p-8 rounded-[2rem]">
-        <h3 className="text-xl font-bold mb-4">基本信息 (Property)</h3>
+      <div className="glass-panel rounded-[2rem] p-5 sm:p-8">
+        <h3 className="mb-4 text-xl font-bold">基本信息</h3>
+
         <div className="grid gap-5 md:grid-cols-2">
           <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">大楼/公寓名称</span>
-            <input required value={form.name} onChange={(e) => updateField("name", e.target.value)} className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none" />
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              大楼名称
+            </span>
+            <input
+              required
+              value={form.name}
+              onChange={(e) => updateField("name", e.target.value)}
+              className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none"
+            />
           </label>
+
           <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">页面链接名 (Slug)</span>
-            <input value={form.slug} onChange={(e) => updateField("slug", e.target.value)} placeholder="可留空，系统会自动生成" className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none" />
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              页面链接名（Slug）
+            </span>
+            <input
+              value={form.slug}
+              onChange={(e) => updateField("slug", e.target.value)}
+              placeholder="可留空，系统会自动生成"
+              className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none"
+            />
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              这是房源页面链接里的那一段，例如 `/listings/artemas-everett`。你可以留空，系统会根据公寓名称自动生成并保持唯一。
+              例如
+              {" "}
+              <code>/listings/mason-everett</code>
+              。
             </p>
           </label>
+
           <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">详细地址</span>
-            <input required value={form.address} onChange={(e) => updateField("address", e.target.value)} className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none" />
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              详细地址
+            </span>
+            <input
+              required
+              value={form.address}
+              onChange={(e) => updateField("address", e.target.value)}
+              className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none"
+            />
           </label>
+
           <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">所属区域</span>
-            <select value={form.area} onChange={(e) => updateField("area", e.target.value)} className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none">
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              所属区域
+            </span>
+            <select
+              value={form.area}
+              onChange={(e) => updateField("area", e.target.value)}
+              className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none"
+            >
               <option value="BACK_BAY">Back Bay</option>
               <option value="BEACON_HILL">Beacon Hill</option>
               <option value="SEAPORT">Seaport</option>
@@ -217,41 +260,125 @@ export function AdminListingForm({
             </select>
           </label>
         </div>
-        <div className="grid gap-5 md:grid-cols-2 mt-5">
-           <label className="flex items-center justify-between rounded-[1.5rem] border bg-white/70 px-4 py-4">
-              <span className="text-sm font-medium">包含中介费</span>
-              <input type="checkbox" checked={form.hasBrokerFee} onChange={(e) => updateField("hasBrokerFee", e.target.checked)} />
-           </label>
-           <label className="flex items-center justify-between rounded-[1.5rem] border bg-white/70 px-4 py-4">
-              <span className="text-sm font-medium">上架展示</span>
-              <input type="checkbox" checked={form.isPublished} onChange={(e) => updateField("isPublished", e.target.checked)} />
-           </label>
+
+        <div className="mt-5 grid gap-5 md:grid-cols-2">
+          <label className="flex items-center justify-between rounded-[1.5rem] border bg-white/70 px-4 py-4">
+            <span className="text-sm font-medium">包含中介费</span>
+            <input
+              type="checkbox"
+              checked={form.hasBrokerFee}
+              onChange={(e) => updateField("hasBrokerFee", e.target.checked)}
+            />
+          </label>
+
+          <label className="flex items-center justify-between rounded-[1.5rem] border bg-white/70 px-4 py-4">
+            <span className="text-sm font-medium">上架展示</span>
+            <input
+              type="checkbox"
+              checked={form.isPublished}
+              onChange={(e) => updateField("isPublished", e.target.checked)}
+            />
+          </label>
         </div>
+
+        <div className="mt-5 grid gap-5 md:grid-cols-2">
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              宠物政策
+            </span>
+            <select
+              value={form.petPolicy}
+              onChange={(e) => updateField("petPolicy", e.target.value)}
+              className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none"
+            >
+              <option value="OPEN">不限</option>
+              <option value="CATS_ONLY">仅猫</option>
+              <option value="CATS_AND_DOGS">猫狗均可</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              车位费
+            </span>
+            <input
+              value={form.parkingFee}
+              onChange={(e) => updateField("parkingFee", e.target.value)}
+              placeholder="可选，按月填写"
+              className="w-full rounded-2xl border bg-white/85 px-4 py-3 outline-none"
+            />
+          </label>
+        </div>
+
+        <div className="mt-5">
+          <label className="flex items-center justify-between rounded-[1.5rem] border bg-white/70 px-4 py-4">
+            <span className="text-sm font-medium">接受本科生</span>
+            <input
+              type="checkbox"
+              checked={form.acceptsUndergrad}
+              onChange={(e) => updateField("acceptsUndergrad", e.target.checked)}
+            />
+          </label>
+        </div>
+
         <div className="mt-5">
           <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">当前优惠 (Promotions)</span>
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              当前优惠
+            </span>
             <textarea
               value={form.promotions}
               onChange={(e) => updateField("promotions", e.target.value)}
               rows={4}
-              placeholder="例如：Apply within 24 hours and receive 2 months free. 多条优惠可以用分号或换行分隔。"
+              placeholder="可选，填写 leasing promotion"
               className="w-full rounded-[1.5rem] border bg-white/85 px-4 py-3 outline-none"
             />
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              这里填写当前有效的 leasing promotion。前台会直接展示，之后如果公寓调整优惠，你可以随时回来修改。
-            </p>
           </label>
         </div>
+
+        <div className="mt-5">
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              交通信息
+            </span>
+            <textarea
+              value={form.transitInfo}
+              onChange={(e) => updateField("transitInfo", e.target.value)}
+              rows={3}
+              placeholder="填写 Transit Score、Walk Score、班车等信息"
+              className="w-full rounded-[1.5rem] border bg-white/85 px-4 py-3 outline-none"
+            />
+          </label>
+        </div>
+
+        <div className="mt-5">
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              房源描述
+            </span>
+            <textarea
+              required
+              value={form.description}
+              onChange={(e) => updateField("description", e.target.value)}
+              rows={6}
+              placeholder="填写大楼介绍"
+              className="w-full rounded-[1.5rem] border bg-white/85 px-4 py-3 outline-none"
+            />
+          </label>
+        </div>
+
         <div className="mt-5 rounded-[1.5rem] border bg-white/70 p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-800">Nearby Schools</p>
+              <p className="text-sm font-medium text-slate-800">附近学校</p>
               <p className="text-sm leading-6 text-slate-500">
-                录入房源时把附近学校一起选上，前台大学分类就能按学校筛选对应公寓。
+                选择和该房源有关联的学校。
               </p>
             </div>
             <p className="text-xs font-medium tracking-wide text-slate-400">
-              已选择 {form.nearbySchools.length} 所
+              已选择
+              {" "}
+              {form.nearbySchools.length}
             </p>
           </div>
 
@@ -277,27 +404,55 @@ export function AdminListingForm({
             })}
           </div>
         </div>
+
         <div className="mt-5">
-           <CloudinaryUploader
-             value={form.imageUrls}
-             onChange={(v) =>
-               void syncAssetField("imageUrls", v, "主图已自动保存到数据库。")
-             }
-           />
-           {initialData ? (
-             <p className="mt-3 text-sm text-slate-500">
-               上传或删除主图后会自动同步到当前房源，不需要额外点击保存。
-             </p>
-           ) : null}
+          <CloudinaryUploader
+            value={form.imageUrls}
+            onChange={(value) =>
+              void syncAssetField(
+                "imageUrls",
+                value,
+                "主图已保存到数据库。"
+              )
+            }
+          />
+          <p className="mt-3 text-sm text-slate-500">
+            可以先不上传主图直接入库，后面再补。没有主图的房源会保持未发布状态。
+          </p>
+          {initialData ? (
+            <p className="mt-3 text-sm text-slate-500">
+              编辑已有房源时，图片变更会自动保存。
+            </p>
+          ) : null}
         </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 p-4">
-         {status && <p className="text-sm text-slate-600">{status}</p>}
-         <div className="flex gap-3">
-           {initialData && onCancelEdit ? <button type="button" onClick={onCancelEdit} className="px-5 py-3 rounded-full border bg-white">取消编辑</button> : null}
-           <button type="submit" disabled={isSubmitting || isSyncingAssets} className="rounded-full bg-slate-950 px-5 py-3 text-white">{isSubmitting ? "处理中..." : isSyncingAssets ? "正在同步图片..." : "保存建筑记录"}</button>
-         </div>
+        {status ? <p className="text-sm text-slate-600">{status}</p> : null}
+
+        <div className="flex gap-3">
+          {initialData && onCancelEdit ? (
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="rounded-full border bg-white px-5 py-3"
+            >
+              取消编辑
+            </button>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={isSubmitting || isSyncingAssets}
+            className="rounded-full bg-slate-950 px-5 py-3 text-white"
+          >
+            {isSubmitting
+              ? "保存中..."
+              : isSyncingAssets
+                ? "同步图片中..."
+                : "保存大楼"}
+          </button>
+        </div>
       </div>
     </form>
   );

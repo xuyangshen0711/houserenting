@@ -110,7 +110,7 @@ export function AdminDashboard({
 
     if (
       !target ||
-      !window.confirm(`Delete "${target.name}"? This cannot be undone.`)
+      !window.confirm(`确定删除「${target.name}」吗？此操作无法撤销。`)
     ) {
       return;
     }
@@ -125,16 +125,16 @@ export function AdminDashboard({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message ?? "Delete failed");
+        throw new Error(result.message ?? "删除失败");
       }
 
       setListings((current) => current.filter((listing) => listing.id !== id));
       if (editingListingFull?.id === id) {
         setEditingListingFull(null);
       }
-      setStatus("Building deleted.");
+      setStatus("公寓已删除。");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Delete failed");
+      setStatus(error instanceof Error ? error.message : "删除失败");
     } finally {
       setPendingId("");
     }
@@ -153,7 +153,7 @@ export function AdminDashboard({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message ?? "Update failed");
+        throw new Error(result.message ?? "更新状态失败");
       }
 
       setListings((current) =>
@@ -170,11 +170,11 @@ export function AdminDashboard({
 
       setStatus(
         result.listing.isPublished
-          ? "Listing published."
-          : "Listing unpublished."
+          ? "房源已上架。"
+          : "房源已下架。"
       );
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Update failed");
+      setStatus(error instanceof Error ? error.message : "更新状态失败");
     } finally {
       setPendingId("");
     }
@@ -200,17 +200,17 @@ export function AdminDashboard({
             <h2 className="text-2xl font-bold">
               {editingListingFull.name}
               {" "}
-              - Edit Building
+              - 编辑大楼信息
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Update the property info here and save when ready.
+              修改基础资料后会立即保存到数据库。
             </p>
           </div>
           <button
             onClick={() => setEditingListingFull(null)}
             className="rounded-full bg-slate-200 px-5 py-2.5 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-300"
           >
-            Back to List
+            返回列表
           </button>
         </div>
 
@@ -223,7 +223,7 @@ export function AdminDashboard({
                 current.map((item) => (item.id === listing.id ? listing : item))
               );
               setEditingListingFull(null);
-              setStatus("Building updated.");
+              setStatus("公寓已更新。");
             }}
           />
         </div>
@@ -235,25 +235,25 @@ export function AdminDashboard({
     <div className="space-y-10">
       <div className="grid gap-4 sm:grid-cols-4">
         <div className="glass-panel rounded-[2rem] p-5">
-          <p className="text-sm text-slate-500">Total buildings</p>
+          <p className="text-sm text-slate-500">总公寓数</p>
           <p className="mt-2 text-3xl font-semibold text-slate-950">
             {summary.total}
           </p>
         </div>
         <div className="glass-panel rounded-[2rem] p-5">
-          <p className="text-sm text-slate-500">Published</p>
+          <p className="text-sm text-slate-500">已展示</p>
           <p className="mt-2 text-3xl font-semibold text-slate-950">
             {summary.published}
           </p>
         </div>
         <div className="glass-panel rounded-[2rem] p-5">
-          <p className="text-sm text-slate-500">Hidden</p>
+          <p className="text-sm text-slate-500">未展示</p>
           <p className="mt-2 text-3xl font-semibold text-slate-950">
             {summary.hidden}
           </p>
         </div>
         <div className="glass-panel rounded-[2rem] p-5">
-          <p className="text-sm text-slate-500">Missing main image</p>
+          <p className="text-sm text-slate-500">缺少主图</p>
           <p className="mt-2 text-3xl font-semibold text-slate-950">
             {summary.missingImages}
           </p>
@@ -264,15 +264,14 @@ export function AdminDashboard({
         <section className="rounded-[2rem] border border-amber-200 bg-amber-50/80 p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="section-label text-amber-700">Needs Attention</p>
+              <p className="section-label text-amber-700">待补全</p>
               <h2 className="mt-3 text-2xl font-semibold tracking-tight text-amber-950">
                 {filteredIncompleteListings.length}
                 {" "}
-                listings are missing a main image
+                个房源缺少主图
               </h2>
               <p className="mt-3 text-sm leading-6 text-amber-900/80">
-                These listings exist in the database but should be completed
-                before publishing. Open the edit page to upload the main image.
+                这些房源已经入库，但暂时不适合发布。点进编辑页上传主图后，图片会自动写回数据库。
               </p>
             </div>
           </div>
@@ -294,7 +293,7 @@ export function AdminDashboard({
                     {listing.address}
                   </p>
                   <p className="mt-2 text-sm font-bold text-amber-700">
-                    Missing main image
+                    缺少主图，请点击上传
                   </p>
                 </div>
 
@@ -302,7 +301,7 @@ export function AdminDashboard({
                   href={`/admin/listings/${listing.id}`}
                   className="inline-flex items-center justify-center rounded-full bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
                 >
-                  Open Editor
+                  去上传主图
                 </Link>
               </div>
             ))}
@@ -312,24 +311,22 @@ export function AdminDashboard({
 
       {!databaseReady ? (
         <div className="rounded-[2rem] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
-          No
+          尚未检测到
           {" "}
           <code>DATABASE_URL</code>
-          {" "}
-          was detected. You can still browse the admin UI, but data management
-          needs PostgreSQL and Prisma migrations to be configured first.
+          ，请先配置 PostgreSQL 和 Prisma。
         </div>
       ) : null}
 
       <section>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="section-label">Building List</p>
+            <p className="section-label">公寓列表</p>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-              Existing properties
+              已录入房源
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-500">
-              The large create form has been moved to its own page.
+              新建表单已经单独放到新页面，这里专心看列表和管理状态。
             </p>
           </div>
 
@@ -342,7 +339,7 @@ export function AdminDashboard({
                 <input
                   value={listingSearch}
                   onChange={(event) => setListingSearch(event.target.value)}
-                  placeholder="Search name, address, or slug"
+                  placeholder="搜索公寓名、地址或 slug"
                   className="w-full rounded-2xl border border-slate-200 bg-white/85 py-3 pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-slate-400"
                 />
               </label>
@@ -353,12 +350,12 @@ export function AdminDashboard({
                 className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/85 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
                 <X className="h-4 w-4" />
-                Clear
+                清空
               </button>
             </div>
 
             <p className="text-xs font-light tracking-wide text-slate-400">
-              Showing
+              当前显示
               {" "}
               {filteredListings.length}
               {" "}
@@ -389,7 +386,7 @@ export function AdminDashboard({
                             : "bg-slate-200 text-slate-700"
                         ].join(" ")}
                       >
-                        {listing.isPublished ? "Published" : "Hidden"}
+                        {listing.isPublished ? "已展示" : "未展示"}
                       </span>
                     </div>
 
@@ -400,12 +397,12 @@ export function AdminDashboard({
                       {listing.address}
                     </p>
                     <p className="mt-3 text-sm font-medium text-slate-800">
-                      Floor plans:
+                      户型数：
                       {" "}
                       {listing.floorPlans?.length || 0}
                       {" "}
                       /{" "}
-                      {listing.hasBrokerFee ? "Broker fee" : "No broker fee"}
+                      {listing.hasBrokerFee ? "有中介费" : "无中介费"}
                     </p>
                     <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
                       {listing.description}
@@ -414,7 +411,7 @@ export function AdminDashboard({
                     {listing.promotions ? (
                       <div className="mt-4 rounded-[1.25rem] border border-emerald-200 bg-emerald-50/80 px-4 py-3">
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
-                          Current Promotion
+                          当前优惠
                         </p>
                         <p className="mt-2 text-sm leading-6 text-emerald-950">
                           {listing.promotions}
@@ -424,7 +421,7 @@ export function AdminDashboard({
 
                     <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
                       <span className="rounded-full bg-white/70 px-3 py-1">
-                        Images:
+                        图片：
                         {" "}
                         {listing.imageUrls.length}
                       </span>
@@ -454,7 +451,7 @@ export function AdminDashboard({
                       className="inline-flex items-center gap-2 rounded-full border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow"
                     >
                       <LayoutDashboard className="h-4 w-4" />
-                      Floor Plans
+                      管理户型
                     </button>
 
                     <button
@@ -463,7 +460,7 @@ export function AdminDashboard({
                       className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                       <PencilLine className="h-4 w-4" />
-                      Edit
+                      编辑
                     </button>
 
                     <button
@@ -473,7 +470,7 @@ export function AdminDashboard({
                       className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                     >
                       <Power className="h-4 w-4" />
-                      {listing.isPublished ? "Unpublish" : "Publish"}
+                      {listing.isPublished ? "下架" : "上架"}
                     </button>
 
                     <button
@@ -483,7 +480,7 @@ export function AdminDashboard({
                       className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 disabled:opacity-60"
                     >
                       <Trash2 className="h-4 w-4" />
-                      Delete
+                      删除
                     </button>
                   </div>
                 </div>
@@ -492,12 +489,12 @@ export function AdminDashboard({
           ) : (
             <div className="glass-panel rounded-[2rem] p-8 text-center">
               <p className="text-lg font-semibold text-slate-950">
-                {listingSearch.trim() ? "No matching properties" : "No listings yet"}
+                {listingSearch.trim() ? "没有匹配的公寓" : "还没有房源"}
               </p>
               <p className="mt-3 text-sm leading-6 text-slate-500">
                 {listingSearch.trim()
-                  ? "Try another keyword."
-                  : "Use the New Building button at the top to create your first property."}
+                  ? "试试其他关键词。"
+                  : "点击顶部的新建公寓按钮即可开始录入。"}
               </p>
             </div>
           )}

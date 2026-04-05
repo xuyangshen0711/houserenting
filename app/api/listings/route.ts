@@ -29,13 +29,10 @@ export async function POST(request: Request) {
       desiredSlug: typeof body.slug === "string" ? body.slug : "",
       name: String(body.name ?? "")
     });
-
-    if (!Array.isArray(body.imageUrls) || body.imageUrls.length === 0) {
-      return NextResponse.json(
-        { message: "请至少为大楼上传 1 张全局展示图片。" },
-        { status: 400 }
-      );
-    }
+    const imageUrls = Array.isArray(body.imageUrls) ? body.imageUrls : [];
+    const shouldPublish = imageUrls.length
+      ? Boolean(body.isPublished ?? true)
+      : false;
 
     const property = await prisma.property.create({
       data: {
@@ -49,8 +46,8 @@ export async function POST(request: Request) {
         parkingFee: body.parkingFee ? Number(body.parkingFee) : null,
         hasBrokerFee: Boolean(body.hasBrokerFee),
         promotions: body.promotions || null,
-        isPublished: body.isPublished ?? true,
-        imageUrls: body.imageUrls,
+        isPublished: shouldPublish,
+        imageUrls,
         videoUrls: body.videoUrls ?? [],
         description: body.description,
         transitInfo: body.transitInfo
@@ -64,7 +61,9 @@ export async function POST(request: Request) {
     revalidatePath(`/listings/${property.slug}`);
 
     return NextResponse.json({
-      message: "公寓已成功写入数据库。",
+      message: imageUrls.length
+        ? "公寓已保存。"
+        : "公寓已入库，缺少主图时会保持未发布状态，后面补图即可。",
       listing: toAdminListingRecord({
         ...property,
         floorPlanDiagrams: (property.floorPlanDiagrams as Record<string, string[]>) ?? null
@@ -73,7 +72,7 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       {
-        message: "保存时出现错误，请检查表单字段和数据库。",
+        message: "保存失败，请检查表单字段。",
         error: error instanceof Error ? error.message : "Unknown error"
       },
       { status: 500 }
