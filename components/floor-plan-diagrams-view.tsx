@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { X, ZoomIn, Wallet } from "lucide-react";
+import { X, ZoomIn, Wallet, ArrowUpDown } from "lucide-react";
 import { optimizeCloudinaryUrl } from "@/lib/cloudinary-optimization";
 import type { FloorPlanViewModel } from "@/lib/listing-view-model";
 
@@ -101,16 +101,46 @@ export function FloorPlanDiagramsView({ diagrams, floorPlans = [], showRentCard 
     (c) => (diagrams[c.value]?.length ?? 0) > 0
   );
 
+  type SortMode = "default" | "price-asc" | "price-desc" | "size-asc" | "size-desc";
   const [activeTab, setActiveTab] = useState(
     availableCategories.length > 0 ? availableCategories[0].value : ""
   );
+  const [sortMode, setSortMode] = useState<SortMode>("default");
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  function switchTab(value: string) {
+    setActiveTab(value);
+    setSortMode("default");
+  }
 
   if (availableCategories.length === 0) {
     return null;
   }
 
-  const activeCards = getImageCards(floorPlans, diagrams, activeTab);
+  const rawCards = getImageCards(floorPlans, diagrams, activeTab);
+  const activeCards = [...rawCards].sort((a, b) => {
+    if (sortMode === "price-asc") {
+      return (a.monthlyRent ?? Infinity) - (b.monthlyRent ?? Infinity);
+    }
+    if (sortMode === "price-desc") {
+      return (b.monthlyRent ?? -Infinity) - (a.monthlyRent ?? -Infinity);
+    }
+    if (sortMode === "size-asc") {
+      return (a.roomSizeSqFt ?? Infinity) - (b.roomSizeSqFt ?? Infinity);
+    }
+    if (sortMode === "size-desc") {
+      return (b.roomSizeSqFt ?? -Infinity) - (a.roomSizeSqFt ?? -Infinity);
+    }
+    return 0;
+  });
+
+  const sortOptions: { value: SortMode; label: string }[] = [
+    { value: "default", label: "默认" },
+    { value: "price-asc", label: "价格 ↑" },
+    { value: "price-desc", label: "价格 ↓" },
+    { value: "size-asc", label: "面积 ↑" },
+    { value: "size-desc", label: "面积 ↓" },
+  ];
 
   return (
     <>
@@ -136,7 +166,7 @@ export function FloorPlanDiagramsView({ diagrams, floorPlans = [], showRentCard 
                 <button
                   key={category.value}
                   type="button"
-                  onClick={() => setActiveTab(category.value)}
+                  onClick={() => switchTab(category.value)}
                   className={[
                     "rounded-full border px-5 py-2.5 text-left transition-all",
                     isActive
@@ -155,8 +185,31 @@ export function FloorPlanDiagramsView({ diagrams, floorPlans = [], showRentCard 
             })}
           </div>
 
+          {/* Sort Controls */}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="flex items-center gap-1 text-xs text-slate-400">
+              <ArrowUpDown className="h-3.5 w-3.5" />
+              排序
+            </span>
+            {sortOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setSortMode(opt.value)}
+                className={[
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-all",
+                  sortMode === opt.value
+                    ? "border-slate-700 bg-slate-700 text-white"
+                    : "border-slate-200 bg-white/80 text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                ].join(" ")}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
           {/* Diagrams Grid */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {activeCards.map((card, index) => (
               <button
                 key={`${card.url}-${index}`}
