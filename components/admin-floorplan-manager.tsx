@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { LoaderCircle, UploadCloud } from "lucide-react";
 import { CloudinaryUploader } from "@/components/cloudinary-uploader";
 import { optimizeCloudinaryUrl } from "@/lib/cloudinary-optimization";
 import type { AdminListingRecord, FloorPlanSource } from "@/lib/listing-view-model";
@@ -48,6 +49,9 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState("");
   const [selectedLayoutFilter, setSelectedLayoutFilter] = useState<string>("ALL");
+  const [quickUploadingId, setQuickUploadingId] = useState<string | null>(null);
+  const quickUploadInputRef = useRef<HTMLInputElement | null>(null);
+  const quickUploadTargetRef = useRef<FloorPlanSource | null>(null);
   const legacyDiagramCount = useMemo(
     () =>
       Object.values(property.floorPlanDiagrams ?? {}).reduce(
@@ -98,6 +102,38 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
   function updateField<K extends keyof FloorPlanState>(field: K, value: FloorPlanState[K]) {
     if (!editingPlan) return;
     setEditingPlan((prev) => prev ? { ...prev, [field]: value } : null);
+  }
+
+  async function handleQuickUpload(files: FileList) {
+    const fp = quickUploadTargetRef.current;
+    if (!fp) return;
+    setQuickUploadingId(fp.id);
+    try {
+      const formData = new FormData();
+      for (const file of Array.from(files)) formData.append("file", file);
+      const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.message ?? "上传失败");
+
+      const newUrls = [...fp.imageUrls, ...uploadData.urls];
+      const patchRes = await fetch(`/api/floor-plans/${fp.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrls: newUrls })
+      });
+      const patchData = await patchRes.json();
+      if (!patchRes.ok) throw new Error(patchData.message ?? "保存失败");
+
+      const nextFloorPlans = floorPlans.map((p) => p.id === fp.id ? patchData.floorPlan : p);
+      setFloorPlans(nextFloorPlans);
+      onUpdate(nextFloorPlans);
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "操作失败");
+    } finally {
+      setQuickUploadingId(null);
+      quickUploadTargetRef.current = null;
+      if (quickUploadInputRef.current) quickUploadInputRef.current.value = "";
+    }
   }
 
   async function handleDelete(id: string) {
@@ -291,7 +327,16 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
                                 <img src={optimizeCloudinaryUrl(fp.imageUrls[0], "c_fill,h_300,f_auto,q_auto")} alt="封面" className="h-full w-full object-cover" />
                               </div>
                             ) : (
-                              <div className="mb-4 flex h-32 w-full items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-xs text-slate-400">无图片</div>
+                              <button
+                                type="button"
+                                onClick={() => { quickUploadTargetRef.current = fp; quickUploadInputRef.current?.click(); }}
+                                disabled={quickUploadingId === fp.id}
+                                className="mb-4 flex h-32 w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 text-xs text-slate-400 transition hover:border-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                              >
+                                {quickUploadingId === fp.id
+                                  ? <><LoaderCircle className="h-4 w-4 animate-spin" />上传中…</>
+                                  : <><UploadCloud className="h-4 w-4" />点击上传图片</>}
+                              </button>
                             )}
                             <div className="flex gap-2">
                                <button onClick={() => startEdit(fp)} className="flex-1 rounded-lg bg-slate-100 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200">编辑</button>
@@ -368,6 +413,14 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
           </form>
         )}
       </div>
+      <input
+        ref={quickUploadInputRef}
+        type="file"
+        multiple
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => { if (e.target.files?.length) handleQuickUpload(e.target.files); }}
+      />
     </div>
   );
 }
