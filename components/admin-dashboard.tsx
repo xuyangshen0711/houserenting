@@ -38,6 +38,7 @@ export function AdminDashboard({
   const [status, setStatus] = useState(initialStatus);
   const [pendingId, setPendingId] = useState("");
   const [listingSearch, setListingSearch] = useState("");
+  const [selectedArea, setSelectedArea] = useState("");
   const deferredListingSearch = useDeferredValue(listingSearch);
 
   const summary = useMemo(() => {
@@ -54,26 +55,35 @@ export function AdminDashboard({
     };
   }, [listings]);
 
+  const allAreas = useMemo(() => {
+    const areaSet = new Set(listings.map((l) => l.area));
+    return Array.from(areaSet).sort((a, b) =>
+      getAreaLabel(a).localeCompare(getAreaLabel(b))
+    );
+  }, [listings]);
+
   const filteredListings = useMemo(() => {
     const normalizedSearch = deferredListingSearch.trim().toLowerCase();
 
-    if (!normalizedSearch) {
-      return listings;
-    }
-
     return listings.filter((listing) => {
-      const searchableText = [
-        listing.name,
-        listing.address,
-        listing.slug,
-        getAreaLabel(listing.area)
-      ]
-        .join(" ")
-        .toLowerCase();
+      if (selectedArea && listing.area !== selectedArea) return false;
 
-      return searchableText.includes(normalizedSearch);
+      if (normalizedSearch) {
+        const searchableText = [
+          listing.name,
+          listing.address,
+          listing.slug,
+          getAreaLabel(listing.area)
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        if (!searchableText.includes(normalizedSearch)) return false;
+      }
+
+      return true;
     });
-  }, [deferredListingSearch, listings]);
+  }, [deferredListingSearch, selectedArea, listings]);
 
   const filteredIncompleteListings = useMemo(
     () => filteredListings.filter((listing) => listing.imageUrls.length === 0),
@@ -363,6 +373,36 @@ export function AdminDashboard({
               {listings.length}
             </p>
           </div>
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setSelectedArea("")}
+            className={[
+              "rounded-full px-4 py-2 text-sm font-medium transition",
+              !selectedArea
+                ? "bg-slate-900 text-white"
+                : "border border-slate-200 bg-white/80 text-slate-700 hover:bg-slate-50"
+            ].join(" ")}
+          >
+            全部地区
+          </button>
+          {allAreas.map((area) => (
+            <button
+              key={area}
+              type="button"
+              onClick={() => setSelectedArea(selectedArea === area ? "" : area)}
+              className={[
+                "rounded-full px-4 py-2 text-sm font-medium transition",
+                selectedArea === area
+                  ? "bg-slate-900 text-white"
+                  : "border border-slate-200 bg-white/80 text-slate-700 hover:bg-slate-50"
+              ].join(" ")}
+            >
+              {getAreaLabel(area)}
+            </button>
+          ))}
         </div>
 
         <div className="mt-6 space-y-4">
