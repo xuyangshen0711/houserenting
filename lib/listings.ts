@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import {
   getAreaEnum,
   getOrderedAreaLabels,
+  getOrderedSchoolLabels,
   mapToListingViewModel,
   supportedAreaLabels,
   orderedSchoolLabels,
@@ -22,8 +23,35 @@ export async function getUniqueAreas() {
   return ["全部", ...supportedAreaLabels];
 }
 
-export async function getUniqueSchools() {
-  return orderedSchoolLabels;
+export async function getUniqueSchools(selectedArea = "全部") {
+  if (!canUseDatabase()) {
+    return orderedSchoolLabels;
+  }
+
+  try {
+    const areaEnum = selectedArea === "全部" ? null : getAreaEnum(selectedArea);
+    const properties = await prisma.property.findMany({
+      where: {
+        isPublished: true,
+        ...(areaEnum ? { area: areaEnum } : {})
+      },
+      select: {
+        nearbySchools: true
+      }
+    });
+
+    const uniqueSchools = Array.from(
+      new Set(
+        properties.flatMap((property) =>
+          property.nearbySchools.filter((school) => school && school.trim().length > 0)
+        )
+      )
+    );
+
+    return ["全部", ...getOrderedSchoolLabels(uniqueSchools).filter((school) => school !== "全部")];
+  } catch {
+    return orderedSchoolLabels;
+  }
 }
 
 function sortListingsByRent<T extends { monthlyRent: number }>(

@@ -8,7 +8,7 @@ import type { AdminListingRecord, FloorPlanSource } from "@/lib/listing-view-mod
 type AdminFloorPlanManagerProps = {
   property: AdminListingRecord;
   onClose: () => void;
-  onUpdate: () => void;
+  onUpdate: (nextFloorPlans: FloorPlanSource[]) => void;
 };
 
 type FloorPlanState = {
@@ -105,8 +105,9 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
     try {
       const res = await fetch(`/api/floor-plans/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("删除失败");
-      setFloorPlans((prev) => prev.filter((fp) => fp.id !== id));
-      onUpdate();
+      const nextFloorPlans = floorPlans.filter((fp) => fp.id !== id);
+      setFloorPlans(nextFloorPlans);
+      onUpdate(nextFloorPlans);
     } catch (e: any) {
       alert(e.message);
     }
@@ -136,16 +137,21 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
       if (!res.ok) throw new Error(data.message || "请求失败");
 
       if (isEdit) {
-        setFloorPlans((prev) => prev.map((fp) => (fp.id === editingPlan.id ? data.floorPlan : fp)));
+        const nextFloorPlans = floorPlans.map((fp) =>
+          fp.id === editingPlan.id ? data.floorPlan : fp
+        );
+        setFloorPlans(nextFloorPlans);
+        onUpdate(nextFloorPlans);
         setStatus("更新成功！");
       } else {
-        setFloorPlans((prev) => [...prev, data.floorPlan]);
+        const nextFloorPlans = [...floorPlans, data.floorPlan];
+        setFloorPlans(nextFloorPlans);
+        onUpdate(nextFloorPlans);
         setStatus("创建成功！");
       }
 
       setEditingPlan(null);
       setTimeout(() => setStatus(""), 3000);
-      onUpdate();
     } catch (e: any) {
       setStatus(e.message);
     } finally {

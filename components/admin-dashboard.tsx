@@ -43,8 +43,25 @@ export function AdminDashboard({
     [listings]
   );
 
-  async function fetchUpdatedProperty(id: string) {
-    window.location.reload();
+  function syncListingFloorPlans(id: string, nextFloorPlans: AdminListingRecord["floorPlans"]) {
+    setListings((current) =>
+      current.map((listing) =>
+        listing.id === id
+          ? {
+              ...listing,
+              floorPlans: nextFloorPlans
+            }
+          : listing
+      )
+    );
+    setManagingFloorPlansFor((current) =>
+      current && current.id === id
+        ? {
+            ...current,
+            floorPlans: nextFloorPlans
+          }
+        : current
+    );
   }
 
   async function handleDelete(id: string) {
@@ -115,7 +132,7 @@ export function AdminDashboard({
       <AdminFloorPlanManager
         property={managingFloorPlansFor}
         onClose={() => setManagingFloorPlansFor(null)}
-        onUpdate={() => fetchUpdatedProperty(managingFloorPlansFor.id)}
+        onUpdate={(nextFloorPlans) => syncListingFloorPlans(managingFloorPlansFor.id, nextFloorPlans)}
       />
     );
   }

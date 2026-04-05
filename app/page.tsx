@@ -21,12 +21,14 @@ type HomePageProps = {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = (await searchParams) ?? {};
   const selectedArea = params.area ?? "全部";
-  const selectedSchool = params.school ?? "全部";
   const selectedSort = params.sort ?? "default";
   const minRent = params.minRent ?? "";
   const maxRent = params.maxRent ?? "";
   const parsedMinRent = minRent ? Number(minRent) : undefined;
   const parsedMaxRent = maxRent ? Number(maxRent) : undefined;
+  const schools = await getUniqueSchools(selectedArea);
+  const selectedSchool =
+    params.school && schools.includes(params.school) ? params.school : "全部";
 
   const listings = await getFeaturedListings(
     selectedArea,
@@ -36,7 +38,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     Number.isFinite(parsedMaxRent) ? parsedMaxRent : undefined
   );
   const areas = await getUniqueAreas();
-  const schools = await getUniqueSchools();
 
   const rentSummary =
     selectedSort === "rent_asc"
@@ -63,18 +64,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       </section>
 
       {/* ─── Hero (animated client component) ────────────── */}
-      <HeroSection
-        selectedArea={selectedArea}
-        selectedSchool={selectedSchool}
-        rentSummary={rentSummary}
-      />
+      <HeroSection />
 
       {/* ─── Filters ──────────────────────────────────────── */}
-      <section className="content-wrap pt-16 sm:pt-20">
+      <section className="content-wrap pt-10 sm:pt-12">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <span className="section-label">三类筛选</span>
-            <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
               开始找寻您的新家
             </h2>
           </div>
