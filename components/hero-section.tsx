@@ -25,18 +25,27 @@ export function HeroSection() {
           <span className="section-label">Aura Boston · 精选住居</span>
         </motion.div>
 
-        {/* Main title — solid indigo-950 for max contrast on mobile */}
-        <motion.h1
+        {/* Main title */}
+        <motion.div
           variants={fadeUp}
           initial="hidden"
           animate="show"
           custom={0.18}
-          className="mt-7 text-6xl font-black tracking-tighter text-indigo-950 sm:text-8xl leading-[1.2]"
+          className="mt-10 flex flex-col gap-2 sm:gap-3"
         >
-          此心安处
-          <br />
-          归巢栖息
-        </motion.h1>
+          <h1
+            className="text-[2.75rem] font-bold tracking-tight sm:text-[4rem]"
+            style={{ color: "#24324A", lineHeight: 1.15 }}
+          >
+            此心安处
+          </h1>
+          <p
+            className="text-[2.5rem] font-semibold tracking-tight sm:text-[3.5rem]"
+            style={{ color: "#3A4A63", lineHeight: 1.15 }}
+          >
+            归巢栖息
+          </p>
+        </motion.div>
 
         {/* Subtitle — stagger ~0.2s after title */}
         <motion.p
@@ -44,7 +53,7 @@ export function HeroSection() {
           initial="hidden"
           animate="show"
           custom={0.38}
-          className="mt-5 max-w-lg text-sm font-light leading-7 tracking-wide text-slate-800 sm:text-base"
+          className="mt-8 max-w-lg text-sm font-light leading-7 tracking-wide text-slate-600 sm:text-base"
         >
           Aura Boston：波士顿房源精选平台，遇见你的理想居所。
         </motion.p>

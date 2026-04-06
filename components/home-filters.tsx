@@ -196,7 +196,7 @@ export function HomeFilters({
         <div className="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto_auto]">
           <label className="block">
             <span className="mb-2 block text-xs font-medium tracking-wide text-slate-600">
-              公寓名 / 地址 / slug
+              公寓名 / 地址
             </span>
             <div className="relative">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
