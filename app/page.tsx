@@ -63,7 +63,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <section className="content-wrap pt-6 sm:pt-8">
         <div className="flex items-center justify-between rounded-full px-5 py-3 text-sm" style={{ border: "1px solid rgba(15,23,40,0.08)", background: "rgba(255,255,255,0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
           <span className="logo-text text-base">Aura Boston</span>
-          <span className="font-light tracking-wide text-slate-400">波士顿精选租房</span>
+          <span className="font-light tracking-wide text-slate-400">添加微信：Aurabostonhomes</span>
         </div>
       </section>
 

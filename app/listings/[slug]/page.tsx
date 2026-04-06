@@ -199,6 +199,19 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
           </div>
         </div>
       </section>
+
+      {/* Contact CTA */}
+      <section className="mx-auto mt-6 max-w-5xl px-5 pb-10">
+        <div className="rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50 p-8">
+          <p className="text-2xl font-bold text-slate-950">
+            有心仪房源，想看更多视频，欢迎直接联系
+          </p>
+          <p className="mt-3 text-base text-slate-500">
+            添加微信：
+            <span className="font-medium text-slate-700">Aurabostonhomes</span>
+          </p>
+        </div>
+      </section>
     </main>
   );
 }

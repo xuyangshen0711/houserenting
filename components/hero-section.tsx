@@ -33,7 +33,9 @@ export function HeroSection() {
           custom={0.18}
           className="mt-7 text-5xl font-black tracking-tighter text-indigo-950 sm:text-7xl leading-[1.08]"
         >
-          此心安处，归巢栖息
+          此心安处，
+          <br />
+          归巢栖息
         </motion.h1>
 
         {/* Subtitle — stagger ~0.2s after title */}
