@@ -31,9 +31,9 @@ export function HeroSection() {
           initial="hidden"
           animate="show"
           custom={0.18}
-          className="mt-7 text-5xl font-black tracking-tighter text-indigo-950 sm:text-7xl leading-[1.08]"
+          className="mt-7 text-6xl font-black tracking-tighter text-indigo-950 sm:text-8xl leading-[1.2]"
         >
-          此心安处，
+          此心安处
           <br />
           归巢栖息
         </motion.h1>

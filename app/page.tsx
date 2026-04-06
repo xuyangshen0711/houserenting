@@ -1,12 +1,15 @@
 import { HomeFilters } from "@/components/home-filters";
 import { HeroSection } from "@/components/hero-section";
 import { ListingCard } from "@/components/listing-card";
+import { Pagination } from "@/components/pagination";
 import {
   getFeaturedListings,
   getUniqueAreas,
   getUniqueSchools
 } from "@/lib/listings";
 import { type RentSortValue } from "@/lib/listing-view-model";
+
+const PAGE_SIZE = 6;
 
 type HomePageProps = {
   searchParams?: Promise<{
@@ -16,6 +19,7 @@ type HomePageProps = {
     q?: string;
     minRent?: string;
     maxRent?: string;
+    page?: string;
   }>;
 };
 
@@ -26,6 +30,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const searchQuery = params.q?.trim() ?? "";
   const minRent = params.minRent ?? "";
   const maxRent = params.maxRent ?? "";
+  const currentPage = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const parsedMinRent = minRent ? Number(minRent) : undefined;
   const parsedMaxRent = maxRent ? Number(maxRent) : undefined;
   const schools = await getUniqueSchools(selectedArea);
@@ -41,6 +46,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     Number.isFinite(parsedMaxRent) ? parsedMaxRent : undefined
   );
   const areas = await getUniqueAreas();
+  const totalListings = listings.length;
+  const totalPages = Math.max(1, Math.ceil(totalListings / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedListings = listings.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const rentSummary =
     selectedSort === "rent_asc"
@@ -96,13 +105,18 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       </section>
 
       {/* ─── Listings grid ────────────────────────────────── */}
-      <section className="content-wrap pt-10">
-        {listings.length ? (
-          <div className="grid grid-cols-1 gap-5 md:auto-rows-[320px] md:grid-cols-6">
-            {listings.map((listing, index) => (
-              <ListingCard key={listing.slug} listing={listing} index={index} />
-            ))}
-          </div>
+      <section id="listings-grid" className="content-wrap pt-10">
+        {paginatedListings.length ? (
+          <>
+            <div className="grid grid-cols-1 gap-5 md:auto-rows-[320px] md:grid-cols-6">
+              {paginatedListings.map((listing, index) => (
+                <ListingCard key={listing.slug} listing={listing} index={index} />
+              ))}
+            </div>
+            {totalPages > 1 && (
+              <Pagination currentPage={safePage} totalPages={totalPages} />
+            )}
+          </>
         ) : (
           <div className="glass-filter rounded-[2rem] p-8 text-center">
             <p className="text-lg font-bold text-slate-950">
