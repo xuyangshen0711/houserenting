@@ -1,10 +1,10 @@
 import Image from "next/image";
-import Link from "next/link";
 import { BedDouble, MapPin, PawPrint, Sofa, TrainFront } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getListingBySlug } from "@/lib/listings";
 import { NearbyPlaces } from "@/components/nearby-places";
 import { FloorPlanDiagramsView } from "@/components/floor-plan-diagrams-view";
+import { BackToHomeButton } from "@/components/back-to-home-button";
 
 type ListingDetailPageProps = {
   params: Promise<{
@@ -52,12 +52,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
     <main className="page-shell pb-20">
       <section className="content-wrap pt-4 sm:pt-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link
-            href="/"
-            className="glass-panel rounded-full px-4 py-3 text-sm font-medium text-slate-700"
-          >
-            返回首页
-          </Link>
+          <BackToHomeButton />
           <div className="section-label">{listing.area}</div>
         </div>
       </section>
