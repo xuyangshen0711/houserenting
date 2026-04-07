@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { AdminListingForm } from "@/components/admin-listing-form";
 import type { AdminListingRecord } from "@/lib/listing-view-model";
@@ -11,19 +11,21 @@ type AdminListingEditorProps = {
 };
 
 export function AdminListingEditor({ listing }: AdminListingEditorProps) {
+  const router = useRouter();
   const [currentListing, setCurrentListing] = useState(listing);
   const [status, setStatus] = useState("");
 
   return (
     <section className="content-wrap pt-10">
       <div className="max-w-4xl">
-        <Link
-          href="/admin"
+        <button
+          type="button"
+          onClick={() => window.history.length > 1 ? router.back() : router.push("/admin")}
           className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
           <ArrowLeft className="h-4 w-4" />
           返回后台总览
-        </Link>
+        </button>
 
         <div className="mt-8">
           <p className="section-label">房源编辑</p>

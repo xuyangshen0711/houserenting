@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { AdminListingForm } from "@/components/admin-listing-form";
@@ -11,13 +10,14 @@ export function AdminListingCreator() {
   return (
     <section className="content-wrap pt-10">
       <div className="max-w-4xl">
-        <Link
-          href="/admin"
+        <button
+          type="button"
+          onClick={() => window.history.length > 1 ? router.back() : router.push("/admin")}
           className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
           <ArrowLeft className="h-4 w-4" />
           返回后台总览
-        </Link>
+        </button>
 
         <div className="mt-8">
           <p className="section-label">新增公寓</p>
