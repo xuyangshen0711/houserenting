@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@300;400;500;600;700;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -178,6 +178,12 @@ textarea {
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 0 10px rgba(124, 92, 252, 0.28));
+}
+
+.listing-card-title {
+  font-family: "Cormorant Garamond", "Times New Roman", serif;
+  font-weight: 700;
+  letter-spacing: -0.045em;
 }
 
 /* ─── Utilities ─────────────────────────────────────────────── */

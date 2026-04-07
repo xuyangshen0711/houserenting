@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, TrainFront } from "lucide-react";
 import type { ListingViewModel } from "@/lib/listing-view-model";
 import { optimizeCloudinaryUrl } from "@/lib/cloudinary-optimization";
 
@@ -17,6 +17,7 @@ export function ListingCard({ listing, index }: ListingCardProps) {
   const imageUrls = listing.imageUrls.length ? listing.imageUrls : ["/placeholder-house.webp"];
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+  const hasRent = listing.monthlyRent > 0;
 
   useEffect(() => {
     setActiveImageIndex(0);
@@ -137,68 +138,60 @@ export function ListingCard({ listing, index }: ListingCardProps) {
           ) : null}
         </div>
 
-        {/* Info & Floor Plans */}
-        <div className="w-full md:w-3/5 p-6 md:p-8 flex flex-col">
-          <Link
-            href={`/listings/${listing.slug}`}
-            className="mb-5 flex items-end justify-between gap-4 rounded-[1.25rem] border border-white/40 bg-white/55 px-4 py-4 backdrop-blur-sm md:hidden"
-          >
-            <div className="min-w-0">
-              <p className="truncate text-lg font-semibold text-slate-950">{listing.title}</p>
-              <p className="mt-1 text-sm text-slate-500">{listing.area}</p>
-            </div>
-            <div className="shrink-0 text-right">
-              <p className="text-xs font-medium tracking-[0.08em] text-slate-400">起始价格</p>
-              {listing.monthlyRent > 0 ? (
-                <p className="mt-1 whitespace-nowrap text-xl font-black text-slate-950">
-                  ${listing.monthlyRent.toLocaleString()}
-                  <span className="ml-1 text-sm font-medium text-slate-400">/ 月</span>
-                </p>
-              ) : (
-                <p className="mt-1 whitespace-nowrap text-xl font-black text-slate-950">Ask for price</p>
-              )}
-            </div>
-          </Link>
+        <Link
+          href={`/listings/${listing.slug}`}
+          className="group flex w-full flex-1 flex-col justify-between p-6 transition duration-200 hover:bg-white/18 md:w-3/5 md:p-7 lg:p-8"
+        >
+          <div>
+            <h3 className="listing-card-title text-[2.25rem] leading-none text-slate-950 sm:text-[2.6rem] lg:text-[3.3rem]">
+              {listing.title}
+            </h3>
 
-          <div className="mb-4 hidden border-l-2 border-violet-200 pl-3 text-sm font-light text-slate-500 md:block">
-            🚆 {listing.transitInfo}
-          </div>
-
-          <h4 className="mb-4 mt-auto hidden text-sm font-semibold uppercase tracking-[0.12em] text-slate-400 md:block">点击了解更多</h4>
-          <div className="space-y-3">
-            <Link
-              href={`/listings/${listing.slug}`}
-              className="group hidden flex-col justify-between rounded-xl border border-white/40 bg-white/50 p-4 transition duration-200 hover:scale-[1.015] hover:border-white/60 hover:bg-white/75 hover:shadow-float md:flex md:flex-row md:items-center"
-            >
-              <div className="min-w-0">
-                <p className="font-semibold text-slate-900">{listing.title}</p>
-                <p className="text-xs font-light text-slate-500 mt-1">
-                  Location: {listing.area}
+            <div className="mt-4 rounded-[1.4rem] border border-white/55 bg-white/62 px-4 py-4 shadow-[0_18px_45px_rgba(148,163,184,0.12)] backdrop-blur-md">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-950/6 text-slate-700">
+                  <TrainFront className="h-4 w-4" />
+                </span>
+                <p className="text-sm leading-7 text-slate-600 md:text-[0.95rem]">
+                  {listing.transitInfo}
                 </p>
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2 md:mt-0 md:justify-end">
-                {listing.monthlyRent > 0 ? (
-                  <>
-                    <span className="text-sm font-medium text-slate-500">Starting from</span>
-                    <span className="text-lg font-black text-slate-900">
+            </div>
+
+            <p className="mt-4 text-sm font-medium tracking-[0.02em] text-slate-500">
+              点击了解更多
+            </p>
+          </div>
+
+          <div className="mt-6 rounded-[1.55rem] border border-white/65 bg-white/78 px-5 py-4 shadow-[0_20px_45px_rgba(148,163,184,0.15)] backdrop-blur-md">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="flex items-center gap-2 text-[0.92rem] text-slate-500">
+                  <MapPin className="h-4 w-4 shrink-0 text-slate-400" />
+                  <span className="whitespace-nowrap">Location :</span>
+                  <span className="truncate text-lg font-semibold text-slate-950">
+                    {listing.area}
+                  </span>
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 sm:justify-end">
+                <span className="hidden h-2.5 w-2.5 rounded-full bg-rose-400 sm:inline-flex" />
+                {hasRent ? (
+                  <p className="text-sm text-slate-500">
+                    <span>Starting from</span>
+                    <span className="ml-3 text-[1.65rem] font-black tracking-[-0.03em] text-slate-950">
                       ${listing.monthlyRent.toLocaleString()}
                     </span>
-                    <span className="text-sm font-light text-slate-400">/ 月</span>
-                  </>
+                    <span className="ml-1 text-base font-medium text-slate-400">/ 月</span>
+                  </p>
                 ) : (
-                  <span className="text-lg font-black text-slate-900">Ask for price</span>
+                  <p className="text-lg font-bold text-slate-950">Ask for price</p>
                 )}
               </div>
-            </Link>
-
-            <Link
-              href={`/listings/${listing.slug}`}
-              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 md:hidden"
-            >
-              查看这套公寓
-            </Link>
+            </div>
           </div>
-        </div>
+        </Link>
       </div>
     </motion.div>
   );
