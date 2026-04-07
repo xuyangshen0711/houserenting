@@ -180,7 +180,7 @@ export function ListingCard({ listing, index }: ListingCardProps) {
                 {hasRent ? (
                   <p className="text-sm text-slate-500">
                     <span>Starting from</span>
-                    <span className="ml-3 text-[1.65rem] font-black tracking-[-0.03em] text-slate-950">
+                    <span className="listing-card-accent ml-2 text-[1.35rem] text-slate-950">
                       ${listing.monthlyRent.toLocaleString()}
                     </span>
                     <span className="ml-1 text-base font-medium text-slate-400">/ 月</span>
