@@ -48,7 +48,7 @@ export function ListingCard({ listing, index }: ListingCardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, delay: index * 0.06 }}
-      className="md:col-span-full mb-8 relative overflow-hidden rounded-[2rem] border border-white/35 bg-white/55 backdrop-blur-[20px]"
+      className="relative overflow-hidden rounded-[2rem] border border-white/35 bg-white/55 backdrop-blur-[20px] md:col-span-full"
     >
       <div className="flex flex-col md:flex-row">
         {/* Master Image */}

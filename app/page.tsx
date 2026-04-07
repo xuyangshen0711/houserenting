@@ -108,7 +108,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <section id="listings-grid" className="content-wrap pt-10">
         {paginatedListings.length ? (
           <>
-            <div className="grid grid-cols-1 gap-5 md:auto-rows-[320px] md:grid-cols-6">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-6">
               {paginatedListings.map((listing, index) => (
                 <ListingCard key={listing.slug} listing={listing} index={index} />
               ))}
