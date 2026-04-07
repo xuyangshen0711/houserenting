@@ -60,7 +60,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
       <section className="content-wrap pt-6 sm:pt-14">
         <div className="max-w-3xl">
           <p className="text-sm tracking-[0.2em] text-slate-500">房源详情</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:mt-4 sm:text-6xl">
+          <h1 className="listing-display-font mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:mt-4 sm:text-6xl">
             {listing.title}
           </h1>
           <p className="mt-4 line-clamp-4 text-sm leading-6 text-slate-600 sm:mt-5 sm:text-lg sm:leading-7">
