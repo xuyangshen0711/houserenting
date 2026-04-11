@@ -1,0 +1,45 @@
+{
+  "name": "Mason",
+  "slug": "",
+  "address": "101 Mill Rd, Everett, MA 02149",
+  "area": "Everett",
+  "petPolicy": "Dogs Allowed. Number allowed 2. Monthly dog rent $50. Cats Allowed. Number allowed 2. Monthly cat rent $50. Apply with your pet.",
+  "description": "Mason 公寓以温馨的工业风设计、精致设施和专属工作区域，激发生活灵感。位于 Everett 的豪华公寓，无论是创意工作、健身运动、朋友聚会还是通勤后的放松休憩，都能找到理想节奏。这里，就是家。",
+  "transitInfo": "交通评分 62 / 100（公共交通便利）；步行评分 67 / 100（适合步行）；骑行评分 51 / 100（可骑行）。社区提供免费接驳班车。",
+  "promotions": [
+    "限时招租优惠：可享 6 周免租。具体限制条件请咨询 leasing 顾问。"
+  ],
+  "parkingFee": null,
+  "hasBrokerFee": false,
+  "acceptsUndergrad": true,
+  "isPublished": false,
+  "nearbySchools": [],
+  "imageUrls": [],
+  "videoUrls": [],
+  "floorPlans": [
+    {
+      "name": "Studio",
+      "layout": "Studio",
+      "monthlyRent": 2300,
+      "roomSizeSqFt": 444,
+      "isFurnished": false,
+      "imageUrls": []
+    },
+    {
+      "name": "1 Bedroom",
+      "layout": "1B1B",
+      "monthlyRent": 2365,
+      "roomSizeSqFt": 563,
+      "isFurnished": false,
+      "imageUrls": []
+    },
+    {
+      "name": "2 Bedroom",
+      "layout": "2B2B",
+      "monthlyRent": 3165,
+      "roomSizeSqFt": 914,
+      "isFurnished": false,
+      "imageUrls": []
+    }
+  ]
+}

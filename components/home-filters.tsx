@@ -5,13 +5,11 @@ import { motion } from "framer-motion";
 import { Search, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getSchoolDisplayLabel, type RentSortValue } from "@/lib/listing-view-model";
+import { type RentSortValue } from "@/lib/listing-view-model";
 
 type HomeFiltersProps = {
   areas: string[];
-  schools: string[];
   selectedArea: string;
-  selectedSchool: string;
   selectedSort: RentSortValue;
   searchQuery: string;
   minRent: string;
@@ -23,7 +21,6 @@ type FilterItem = {
   label: string;
 };
 
-// Solid enough to be legible on any colored background
 const cardStyle: React.CSSProperties = {
   border: "1px solid rgba(15, 23, 40, 0.08)",
   background: "rgba(255, 255, 255, 0.82)",
@@ -68,7 +65,6 @@ function FilterPills({
     );
   };
 
-  // Split items evenly into the requested number of rows
   const rowGroups: FilterItem[][] = [];
   if (rows && rows > 1) {
     const perRow = Math.ceil(items.length / rows);
@@ -105,9 +101,7 @@ function FilterPills({
 
 export function HomeFilters({
   areas,
-  schools,
   selectedArea,
-  selectedSchool,
   selectedSort,
   searchQuery,
   minRent,
@@ -131,7 +125,6 @@ export function HomeFilters({
   function buildHref(
     nextValues: {
       area?: string;
-      school?: string;
       sort?: string;
       q?: string;
       minRent?: string;
@@ -140,6 +133,8 @@ export function HomeFilters({
     hash?: string
   ) {
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("school");
+
     for (const [key, value] of Object.entries(nextValues)) {
       if (!value || value === "全部" || value === "default") {
         params.delete(key);
@@ -147,24 +142,19 @@ export function HomeFilters({
         params.set(key, value);
       }
     }
+
     const query = params.toString();
     const base = query ? `/?${query}` : "/";
     return hash ? `${base}${hash}` : base;
   }
 
   function applySearch() {
-    router.push(
-      buildHref({ q: queryInput.trim() }, "#search-section"),
-      { scroll: false }
-    );
+    router.push(buildHref({ q: queryInput.trim() }, "#search-section"), { scroll: false });
   }
 
   function resetSearch() {
     setQueryInput("");
-    router.push(
-      buildHref({ q: "" }, "#search-section"),
-      { scroll: false }
-    );
+    router.push(buildHref({ q: "" }, "#search-section"), { scroll: false });
   }
 
   function applyBudget() {
@@ -177,10 +167,7 @@ export function HomeFilters({
   function resetBudget() {
     setMinBudget("");
     setMaxBudget("");
-    router.push(
-      buildHref({ minRent: "", maxRent: "" }, "#rent-section"),
-      { scroll: false }
-    );
+    router.push(buildHref({ minRent: "", maxRent: "" }, "#rent-section"), { scroll: false });
   }
 
   return (
@@ -189,7 +176,7 @@ export function HomeFilters({
         <div className="flex items-center justify-between gap-4">
           <h3 className="text-xl font-bold tracking-tight text-slate-950">搜索公寓</h3>
           <p className="text-xs font-light tracking-wide text-slate-500">
-            当前：{searchQuery ? searchQuery : "全部公寓"}
+            当前：{searchQuery || "全部公寓"}
           </p>
         </div>
 
@@ -244,20 +231,6 @@ export function HomeFilters({
         rows={2}
       />
 
-      <FilterPills
-        id="school-section"
-        title="大学分类"
-        items={schools.map((school) => ({
-          value: school,
-          label: school === "全部" ? school : getSchoolDisplayLabel(school)
-        }))}
-        selectedValue={selectedSchool}
-        displayValue={
-          selectedSchool === "全部" ? "全部" : getSchoolDisplayLabel(selectedSchool)
-        }
-        getHref={(school) => buildHref({ school }, "#school-section")}
-      />
-
       <section id="rent-section" className="scroll-mt-28 rounded-[2rem] p-6" style={cardStyle}>
         <div className="flex items-center justify-between gap-4">
           <h3 className="text-xl font-bold tracking-tight text-slate-950">房租分类</h3>
@@ -305,7 +278,9 @@ export function HomeFilters({
 
         <div className="mt-6 grid gap-4 md:grid-cols-[1fr_1fr_auto_auto]">
           <label className="block">
-            <span className="mb-2 block text-xs font-medium tracking-wide text-slate-600">最低预算</span>
+            <span className="mb-2 block text-xs font-medium tracking-wide text-slate-600">
+              最低预算
+            </span>
             <input
               value={minBudget}
               onChange={(e) => setMinBudget(e.target.value)}
@@ -316,7 +291,9 @@ export function HomeFilters({
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-xs font-medium tracking-wide text-slate-600">最高预算</span>
+            <span className="mb-2 block text-xs font-medium tracking-wide text-slate-600">
+              最高预算
+            </span>
             <input
               value={maxBudget}
               onChange={(e) => setMaxBudget(e.target.value)}

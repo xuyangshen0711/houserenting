@@ -2,11 +2,7 @@ import { HomeFilters } from "@/components/home-filters";
 import { HeroSection } from "@/components/hero-section";
 import { ListingCard } from "@/components/listing-card";
 import { Pagination } from "@/components/pagination";
-import {
-  getFeaturedListings,
-  getUniqueAreas,
-  getUniqueSchools
-} from "@/lib/listings";
+import { getFeaturedListings, getUniqueAreas } from "@/lib/listings";
 import { type RentSortValue } from "@/lib/listing-view-model";
 
 const PAGE_SIZE = 6;
@@ -14,7 +10,6 @@ const PAGE_SIZE = 6;
 type HomePageProps = {
   searchParams?: Promise<{
     area?: string;
-    school?: string;
     sort?: RentSortValue;
     q?: string;
     minRent?: string;
@@ -33,13 +28,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const currentPage = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const parsedMinRent = minRent ? Number(minRent) : undefined;
   const parsedMaxRent = maxRent ? Number(maxRent) : undefined;
-  const schools = await getUniqueSchools(selectedArea);
-  const selectedSchool =
-    params.school && schools.includes(params.school) ? params.school : "全部";
 
   const listings = await getFeaturedListings(
     selectedArea,
-    selectedSchool,
+    "全部",
     selectedSort,
     searchQuery,
     Number.isFinite(parsedMinRent) ? parsedMinRent : undefined,
@@ -58,45 +50,47 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         ? "高到低"
         : "默认";
   const budgetSummary =
-    minRent || maxRent
-      ? `${minRent || "不限"} - ${maxRent || "不限"}`
-      : "未设置预算";
+    minRent || maxRent ? `${minRent || "不限"} - ${maxRent || "不限"}` : "未设置预算";
   const searchSummary = searchQuery ? `搜索：${searchQuery}` : "未搜索公寓";
 
   return (
     <main className="page-shell pb-20">
-      {/* Ambient orb 3 — pink, bottom */}
       <div className="aura-orb" aria-hidden="true" />
 
-      {/* ─── Top nav bar ──────────────────────────────────── */}
       <section className="content-wrap pt-6 sm:pt-8">
-        <div className="flex items-center justify-between rounded-full px-5 py-3 text-sm" style={{ border: "1px solid rgba(15,23,40,0.08)", background: "rgba(255,255,255,0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
+        <div
+          className="flex items-center justify-between rounded-full px-5 py-3 text-sm"
+          style={{
+            border: "1px solid rgba(15,23,40,0.08)",
+            background: "rgba(255,255,255,0.85)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)"
+          }}
+        >
           <span className="logo-text text-base">Aura Boston</span>
-          <span className="font-light tracking-wide text-slate-400">添加微信：Aurabostonhomes</span>
+          <span className="font-light tracking-wide text-slate-400">
+            添加微信：Aurabostonhomes
+          </span>
         </div>
       </section>
 
-      {/* ─── Hero (animated client component) ────────────── */}
       <HeroSection />
 
-      {/* ─── Filters ──────────────────────────────────────── */}
       <section className="content-wrap pt-10 sm:pt-12">
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-              开始找寻您的新家
+              开始寻找您的新家
             </h2>
           </div>
           <p className="hidden text-xs font-light tracking-wide text-slate-400 sm:block">
-            当前：{selectedArea} · {selectedSchool} · {rentSummary} · {budgetSummary} · {searchSummary}
+            当前：{selectedArea} · {rentSummary} · {budgetSummary} · {searchSummary}
           </p>
         </div>
 
         <HomeFilters
           areas={areas}
-          schools={schools}
           selectedArea={selectedArea}
-          selectedSchool={selectedSchool}
           selectedSort={selectedSort}
           searchQuery={searchQuery}
           minRent={minRent}
@@ -104,7 +98,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         />
       </section>
 
-      {/* ─── Listings grid ────────────────────────────────── */}
       <section id="listings-grid" className="content-wrap pt-10">
         {paginatedListings.length ? (
           <>
@@ -131,7 +124,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         )}
       </section>
 
-      {/* ─── Contact footer ───────────────────────────────── */}
       <section className="content-wrap pt-12 sm:pt-16">
         <div className="glass-filter rounded-[2rem] p-6 sm:p-8">
           <span className="section-label">继续深入聊一聊</span>
@@ -140,7 +132,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </h2>
           <p className="mt-3 text-sm font-light leading-7 text-slate-500">
             添加微信：
-            <span className="ml-2 font-semibold tracking-widest text-slate-900">Aurabostonhomes</span>
+            <span className="ml-2 font-semibold tracking-widest text-slate-900">
+              Aurabostonhomes
+            </span>
           </p>
         </div>
       </section>

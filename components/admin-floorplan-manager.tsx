@@ -22,6 +22,11 @@ type FloorPlanState = {
   imageUrls: string[];
 };
 
+type InlineFloorPlanState = {
+  monthlyRent: string;
+  roomSizeSqFt: string;
+};
+
 const initialFloorPlanState: FloorPlanState = {
   name: "",
   layout: "ONE_BED_ONE_BATH",
@@ -43,10 +48,23 @@ const layoutLabels = Object.fromEntries(
   layoutSections.map((section) => [section.value, section.shortLabel])
 ) as Record<string, string>;
 
-export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloorPlanManagerProps) {
+function toInlineState(floorPlan: FloorPlanSource): InlineFloorPlanState {
+  return {
+    monthlyRent: String(floorPlan.monthlyRent),
+    roomSizeSqFt: floorPlan.roomSizeSqFt ? String(floorPlan.roomSizeSqFt) : ""
+  };
+}
+
+export function AdminFloorPlanManager({
+  property,
+  onClose,
+  onUpdate
+}: AdminFloorPlanManagerProps) {
   const [floorPlans, setFloorPlans] = useState<FloorPlanSource[]>(property.floorPlans);
   const [editingPlan, setEditingPlan] = useState<FloorPlanState | null>(null);
+  const [inlineEdits, setInlineEdits] = useState<Record<string, InlineFloorPlanState>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [savingInlineId, setSavingInlineId] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [selectedLayoutFilter, setSelectedLayoutFilter] = useState<string>("ALL");
   const [quickUploadingId, setQuickUploadingId] = useState<string | null>(null);
@@ -72,9 +90,24 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
 
   const visibleLayoutSections = useMemo(() => {
     return floorPlansByLayout.filter((section) =>
-      selectedLayoutFilter === "ALL" ? section.floorPlans.length > 0 : section.value === selectedLayoutFilter
+      selectedLayoutFilter === "ALL"
+        ? section.floorPlans.length > 0
+        : section.value === selectedLayoutFilter
     );
   }, [floorPlansByLayout, selectedLayoutFilter]);
+
+  function syncFloorPlans(nextFloorPlans: FloorPlanSource[]) {
+    setFloorPlans(nextFloorPlans);
+    onUpdate(nextFloorPlans);
+  }
+
+  function replaceFloorPlan(nextFloorPlan: FloorPlanSource) {
+    const nextFloorPlans = floorPlans.map((plan) =>
+      plan.id === nextFloorPlan.id ? nextFloorPlan : plan
+    );
+    syncFloorPlans(nextFloorPlans);
+    return nextFloorPlans;
+  }
 
   function startCreate(layout = initialFloorPlanState.layout) {
     setEditingPlan({ ...initialFloorPlanState, layout });
@@ -100,67 +133,187 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
   }
 
   function updateField<K extends keyof FloorPlanState>(field: K, value: FloorPlanState[K]) {
-    if (!editingPlan) return;
-    setEditingPlan((prev) => prev ? { ...prev, [field]: value } : null);
+    setEditingPlan((prev) => (prev ? { ...prev, [field]: value } : null));
+  }
+
+  function getInlineDraft(fp: FloorPlanSource) {
+    return inlineEdits[fp.id] ?? toInlineState(fp);
+  }
+
+  function updateInlineField(
+    floorPlanId: string,
+    field: keyof InlineFloorPlanState,
+    value: string
+  ) {
+    setInlineEdits((current) => {
+      const floorPlan = floorPlans.find((plan) => plan.id === floorPlanId);
+      if (!floorPlan) {
+        return current;
+      }
+
+      const base = current[floorPlanId] ?? toInlineState(floorPlan);
+      return {
+        ...current,
+        [floorPlanId]: {
+          ...base,
+          [field]: value
+        }
+      };
+    });
+  }
+
+  function clearInlineDraft(floorPlanId: string) {
+    setInlineEdits((current) => {
+      if (!(floorPlanId in current)) {
+        return current;
+      }
+
+      const next = { ...current };
+      delete next[floorPlanId];
+      return next;
+    });
+  }
+
+  function hasInlineChanges(fp: FloorPlanSource) {
+    const draft = getInlineDraft(fp);
+    return (
+      draft.monthlyRent !== String(fp.monthlyRent) ||
+      draft.roomSizeSqFt !== (fp.roomSizeSqFt ? String(fp.roomSizeSqFt) : "")
+    );
+  }
+
+  async function saveInlineChanges(fp: FloorPlanSource) {
+    const draft = getInlineDraft(fp);
+    const monthlyRent = draft.monthlyRent.trim();
+    const roomSizeSqFt = draft.roomSizeSqFt.trim();
+
+    if (!monthlyRent) {
+      alert("请先填写月租金。");
+      return;
+    }
+
+    setSavingInlineId(fp.id);
+    setStatus("");
+
+    try {
+      const response = await fetch(`/api/floor-plans/${fp.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          monthlyRent,
+          roomSizeSqFt
+        })
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "保存失败");
+      }
+
+      replaceFloorPlan(result.floorPlan);
+      clearInlineDraft(fp.id);
+      setStatus(`已更新 ${result.floorPlan.name} 的租金和面积。`);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "保存失败");
+    } finally {
+      setSavingInlineId(null);
+    }
+  }
+
+  function triggerQuickUpload(fp: FloorPlanSource) {
+    quickUploadTargetRef.current = fp;
+    quickUploadInputRef.current?.click();
   }
 
   async function handleQuickUpload(files: FileList) {
-    const fp = quickUploadTargetRef.current;
-    if (!fp) return;
-    setQuickUploadingId(fp.id);
+    const floorPlan = quickUploadTargetRef.current;
+
+    if (!floorPlan) {
+      return;
+    }
+
+    setQuickUploadingId(floorPlan.id);
+    setStatus("");
+
     try {
       const formData = new FormData();
-      for (const file of Array.from(files)) formData.append("file", file);
-      const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) throw new Error(uploadData.message ?? "上传失败");
+      for (const file of Array.from(files)) {
+        formData.append("file", file);
+      }
 
-      const newUrls = [...fp.imageUrls, ...uploadData.urls];
-      const patchRes = await fetch(`/api/floor-plans/${fp.id}`, {
+      const uploadResponse = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
+      });
+      const uploadResult = await uploadResponse.json();
+
+      if (!uploadResponse.ok) {
+        throw new Error(uploadResult.message ?? "上传失败");
+      }
+
+      const patchResponse = await fetch(`/api/floor-plans/${floorPlan.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrls: newUrls })
+        body: JSON.stringify({
+          imageUrls: [...floorPlan.imageUrls, ...uploadResult.urls]
+        })
       });
-      const patchData = await patchRes.json();
-      if (!patchRes.ok) throw new Error(patchData.message ?? "保存失败");
+      const patchResult = await patchResponse.json();
 
-      const nextFloorPlans = floorPlans.map((p) => p.id === fp.id ? patchData.floorPlan : p);
-      setFloorPlans(nextFloorPlans);
-      onUpdate(nextFloorPlans);
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : "操作失败");
+      if (!patchResponse.ok) {
+        throw new Error(patchResult.message ?? "保存失败");
+      }
+
+      replaceFloorPlan(patchResult.floorPlan);
+      setStatus(`已为 ${patchResult.floorPlan.name} 上传图片。`);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "操作失败");
     } finally {
       setQuickUploadingId(null);
       quickUploadTargetRef.current = null;
-      if (quickUploadInputRef.current) quickUploadInputRef.current.value = "";
+      if (quickUploadInputRef.current) {
+        quickUploadInputRef.current.value = "";
+      }
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("确认删除该户型吗？")) return;
+    if (!confirm("确认删除该户型吗？")) {
+      return;
+    }
+
     try {
-      const res = await fetch(`/api/floor-plans/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("删除失败");
-      const nextFloorPlans = floorPlans.filter((fp) => fp.id !== id);
-      setFloorPlans(nextFloorPlans);
-      onUpdate(nextFloorPlans);
-    } catch (e: any) {
-      alert(e.message);
+      const response = await fetch(`/api/floor-plans/${id}`, { method: "DELETE" });
+
+      if (!response.ok) {
+        throw new Error("删除失败");
+      }
+
+      const nextFloorPlans = floorPlans.filter((floorPlan) => floorPlan.id !== id);
+      syncFloorPlans(nextFloorPlans);
+      clearInlineDraft(id);
+      setStatus("户型已删除。");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "删除失败");
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!editingPlan) return;
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+
+    if (!editingPlan) {
+      return;
+    }
+
     setStatus("");
     setIsSubmitting(true);
 
-    const isEdit = !!editingPlan.id;
-    const url = isEdit ? `/api/floor-plans/${editingPlan.id}` : `/api/floor-plans`;
+    const isEdit = Boolean(editingPlan.id);
+    const url = isEdit ? `/api/floor-plans/${editingPlan.id}` : "/api/floor-plans";
     const method = isEdit ? "PATCH" : "POST";
 
     try {
-      const res = await fetch(url, {
+      const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -169,49 +322,55 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
         })
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "请求失败");
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "请求失败");
+      }
 
       if (isEdit) {
-        const nextFloorPlans = floorPlans.map((fp) =>
-          fp.id === editingPlan.id ? data.floorPlan : fp
-        );
-        setFloorPlans(nextFloorPlans);
-        onUpdate(nextFloorPlans);
-        setStatus("更新成功！");
+        replaceFloorPlan(result.floorPlan);
+        clearInlineDraft(result.floorPlan.id);
+        setStatus("户型已更新。");
       } else {
-        const nextFloorPlans = [...floorPlans, data.floorPlan];
-        setFloorPlans(nextFloorPlans);
-        onUpdate(nextFloorPlans);
-        setStatus("创建成功！");
+        const nextFloorPlans = [...floorPlans, result.floorPlan];
+        syncFloorPlans(nextFloorPlans);
+        setStatus("户型已创建。");
       }
 
       setEditingPlan(null);
-      setTimeout(() => setStatus(""), 3000);
-    } catch (e: any) {
-      setStatus(e.message);
+      window.setTimeout(() => setStatus(""), 3000);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "保存失败");
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden mb-8 border border-slate-100 flex flex-col">
-      <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+    <div className="mb-8 flex flex-col overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-xl">
+      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 p-6">
         <div>
-           <h2 className="text-2xl font-bold">{property.name} - 专属户型管理</h2>
-           <p className="text-sm text-slate-500 mt-1">
-             为该大楼配置其特有的子户型 (Floor plans)。当前已有 {floorPlans.length} 个户型。
-           </p>
+          <h2 className="text-2xl font-bold">{property.name} - 专属户型管理</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            为该大楼配置其特有的子户型（Floor plans）。当前已有 {floorPlans.length} 个户型。
+          </p>
         </div>
-        <button onClick={onClose} className="px-5 py-2.5 bg-slate-200 text-slate-800 rounded-full text-sm font-medium hover:bg-slate-300 transition-colors">
-          返回大楼列表
+        <button
+          onClick={editingPlan ? cancelEdit : onClose}
+          className="rounded-full bg-slate-200 px-5 py-2.5 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-300"
+        >
+          {editingPlan ? "返回户型列表" : "返回大楼列表"}
         </button>
       </div>
 
       <div className="p-6">
-        {status && <div className="mb-4 text-green-600 bg-green-50 p-3 rounded-xl border border-green-100 text-sm">{status}</div>}
-        
+        {status ? (
+          <div className="mb-4 rounded-xl border border-green-100 bg-green-50 p-3 text-sm text-green-600">
+            {status}
+          </div>
+        ) : null}
+
         {!editingPlan ? (
           <div>
             <div className="mb-6 rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-5">
@@ -228,7 +387,7 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
                       key={`quick-create-${section.value}`}
                       type="button"
                       onClick={() => startCreate(section.value)}
-                      className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition-colors"
+                      className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
                     >
                       + 新增 {section.shortLabel}
                     </button>
@@ -262,7 +421,10 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
                   全部
                 </button>
                 {layoutSections.map((section) => {
-                  const count = floorPlansByLayout.find((item) => item.value === section.value)?.floorPlans.length ?? 0;
+                  const count =
+                    floorPlansByLayout.find((item) => item.value === section.value)?.floorPlans
+                      .length ?? 0;
+
                   return (
                     <button
                       key={`filter-${section.value}`}
@@ -283,8 +445,8 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
             </div>
 
             {floorPlans.length === 0 ? (
-              <div className="text-center p-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                <p className="text-slate-400 mb-4">当前尚未添加任何户型数据。</p>
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
+                <p className="mb-4 text-slate-400">当前尚未添加任何户型数据。</p>
               </div>
             ) : (
               <div className="space-y-8">
@@ -312,38 +474,137 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
                       </div>
                     ) : (
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {section.floorPlans.map((fp) => (
-                          <div key={fp.id} className="relative rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-slate-300 group">
-                            <div className="mb-1 text-lg font-bold">{fp.name || "未命名"}</div>
-                            <div className="mb-4 text-sm text-slate-500">
-                               <span className="mr-2 inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold">{layoutLabels[fp.layout]}</span>
-                               ${fp.monthlyRent} / 月 {fp.roomSizeSqFt ? `· ${fp.roomSizeSqFt} sq.ft` : ""}
-                            </div>
-                            <p className="mb-4 text-xs leading-5 text-slate-400">
-                              前台展示：该记录下的每张户型图都会带上这组价格和面积信息。
-                            </p>
-                            {fp.imageUrls.length > 0 ? (
-                              <div className="mb-4 h-32 w-full overflow-hidden rounded-xl bg-slate-100">
-                                <img src={optimizeCloudinaryUrl(fp.imageUrls[0], "c_fill,h_300,f_auto,q_auto")} alt="封面" className="h-full w-full object-cover" />
+                        {section.floorPlans.map((fp) => {
+                          const draft = getInlineDraft(fp);
+                          const isSavingInline = savingInlineId === fp.id;
+                          const isQuickUploading = quickUploadingId === fp.id;
+
+                          return (
+                            <div
+                              key={fp.id}
+                              className="group relative rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-slate-300"
+                            >
+                              <div className="mb-1 text-lg font-bold">{fp.name || "未命名"}</div>
+                              <div className="mb-4 text-sm text-slate-500">
+                                <span className="mr-2 inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold">
+                                  {layoutLabels[fp.layout]}
+                                </span>
+                                ${fp.monthlyRent} / 月
+                                {fp.roomSizeSqFt ? ` · ${fp.roomSizeSqFt} sq.ft` : ""}
                               </div>
-                            ) : (
+                              <p className="mb-4 text-xs leading-5 text-slate-400">
+                                前台展示：该记录下的每张户型图都会带上这组价格和面积信息。
+                              </p>
+
                               <button
                                 type="button"
-                                onClick={() => { quickUploadTargetRef.current = fp; quickUploadInputRef.current?.click(); }}
-                                disabled={quickUploadingId === fp.id}
-                                className="mb-4 flex h-32 w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 text-xs text-slate-400 transition hover:border-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                                onClick={() => triggerQuickUpload(fp)}
+                                disabled={isQuickUploading}
+                                className={[
+                                  "relative mb-4 flex h-36 w-full items-center justify-center overflow-hidden rounded-xl transition",
+                                  fp.imageUrls.length > 0
+                                    ? "bg-slate-100"
+                                    : "border border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                                ].join(" ")}
                               >
-                                {quickUploadingId === fp.id
-                                  ? <><LoaderCircle className="h-4 w-4 animate-spin" />上传中…</>
-                                  : <><UploadCloud className="h-4 w-4" />点击上传图片</>}
+                                {fp.imageUrls.length > 0 ? (
+                                  <>
+                                    <img
+                                      src={optimizeCloudinaryUrl(
+                                        fp.imageUrls[0],
+                                        "c_fill,h_320,f_auto,q_auto"
+                                      )}
+                                      alt={`${fp.name} 户型图`}
+                                      className="h-full w-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-slate-950/0 text-sm font-medium text-white transition group-hover:bg-slate-950/35">
+                                      <span className="rounded-full bg-slate-950/70 px-3 py-1.5 opacity-0 transition group-hover:opacity-100">
+                                        点击上传更多图片
+                                      </span>
+                                    </div>
+                                  </>
+                                ) : isQuickUploading ? (
+                                  <span className="flex flex-col items-center gap-1.5 text-xs">
+                                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                                    上传中...
+                                  </span>
+                                ) : (
+                                  <span className="flex flex-col items-center gap-1.5 text-xs">
+                                    <UploadCloud className="h-4 w-4" />
+                                    点击上传图片
+                                  </span>
+                                )}
+
+                                {fp.imageUrls.length > 0 && isQuickUploading ? (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-slate-950/45 text-white">
+                                    <span className="flex items-center gap-2 rounded-full bg-slate-950/70 px-3 py-1.5 text-sm">
+                                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                                      上传中...
+                                    </span>
+                                  </div>
+                                ) : null}
                               </button>
-                            )}
-                            <div className="flex gap-2">
-                               <button onClick={() => startEdit(fp)} className="flex-1 rounded-lg bg-slate-100 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200">编辑</button>
-                               <button onClick={() => handleDelete(fp.id)} className="flex-1 rounded-lg bg-red-50 py-2 text-sm font-medium text-red-600 hover:bg-red-100">删除</button>
+
+                              <div className="grid gap-3">
+                                <label className="block">
+                                  <span className="mb-1.5 block text-xs font-medium text-slate-600">
+                                    月租金 ($)
+                                  </span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={draft.monthlyRent}
+                                    onChange={(event) =>
+                                      updateInlineField(fp.id, "monthlyRent", event.target.value)
+                                    }
+                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+                                  />
+                                </label>
+
+                                <label className="block">
+                                  <span className="mb-1.5 block text-xs font-medium text-slate-600">
+                                    面积 (sq.ft)
+                                  </span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={draft.roomSizeSqFt}
+                                    onChange={(event) =>
+                                      updateInlineField(fp.id, "roomSizeSqFt", event.target.value)
+                                    }
+                                    placeholder="可留空"
+                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+                                  />
+                                </label>
+                              </div>
+
+                              <div className="mt-4 flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => void saveInlineChanges(fp)}
+                                  disabled={isSavingInline || !hasInlineChanges(fp)}
+                                  className="flex-1 rounded-lg bg-slate-900 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+                                >
+                                  {isSavingInline ? "保存中..." : "保存租金/面积"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => startEdit(fp)}
+                                  className="flex-1 rounded-lg bg-slate-100 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                                >
+                                  编辑详情
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => void handleDelete(fp.id)}
+                                  className="flex-1 rounded-lg bg-red-50 py-2 text-sm font-medium text-red-600 hover:bg-red-100"
+                                >
+                                  删除
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </section>
@@ -352,20 +613,34 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
             )}
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 mt-2">
-            <h3 className="text-xl font-bold mb-6">
-               {editingPlan.id ? "编辑户型" : "新增户型"}
+          <form
+            onSubmit={handleSubmit}
+            className="mt-2 rounded-3xl border border-slate-100 bg-slate-50 p-6"
+          >
+            <h3 className="mb-6 text-xl font-bold">
+              {editingPlan.id ? "编辑户型" : "新增户型"}
             </h3>
-            
-            <div className="grid gap-5 md:grid-cols-2 mb-6">
+
+            <div className="mb-6 grid gap-5 md:grid-cols-2">
               <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">户型标语或名称 (如 1B1B Courtyard View / Studio A)</span>
-                <input required value={editingPlan.name} onChange={(e) => updateField("name", e.target.value)} className="w-full rounded-2xl border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900" />
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  户型标语或名称 (如 1B1B Courtyard View / Studio A)
+                </span>
+                <input
+                  required
+                  value={editingPlan.name}
+                  onChange={(event) => updateField("name", event.target.value)}
+                  className="w-full rounded-2xl border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900"
+                />
               </label>
-              
+
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-700">户型分类</span>
-                <select value={editingPlan.layout} onChange={(e) => updateField("layout", e.target.value)} className="w-full rounded-2xl border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900">
+                <select
+                  value={editingPlan.layout}
+                  onChange={(event) => updateField("layout", event.target.value)}
+                  className="w-full rounded-2xl border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900"
+                >
                   {layoutSections.map((section) => (
                     <option key={section.value} value={section.value}>
                       {section.label} ({section.shortLabel})
@@ -373,53 +648,91 @@ export function AdminFloorPlanManager({ property, onClose, onUpdate }: AdminFloo
                   ))}
                 </select>
               </label>
-              
+
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-700">月租金 ($)</span>
-                <input required type="number" min="0" value={editingPlan.monthlyRent} onChange={(e) => updateField("monthlyRent", e.target.value)} className="w-full rounded-2xl border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900" />
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  value={editingPlan.monthlyRent}
+                  onChange={(event) => updateField("monthlyRent", event.target.value)}
+                  className="w-full rounded-2xl border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900"
+                />
                 <p className="mt-2 text-xs leading-5 text-slate-400">
                   这条价格会显示在该户型记录下所有图片的下方。
                 </p>
               </label>
-              
+
               <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">面积 (sq.ft) - 可选</span>
-                <input type="number" min="0" value={editingPlan.roomSizeSqFt} onChange={(e) => updateField("roomSizeSqFt", e.target.value)} className="w-full rounded-2xl border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900" />
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  面积 (sq.ft) - 可选
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  value={editingPlan.roomSizeSqFt}
+                  onChange={(event) => updateField("roomSizeSqFt", event.target.value)}
+                  className="w-full rounded-2xl border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900"
+                />
                 <p className="mt-2 text-xs leading-5 text-slate-400">
                   如果同一户型分类里有不同面积或不同价格，请分别新建多条户型记录。
                 </p>
               </label>
             </div>
 
-            <label className="flex items-center gap-3 mb-6 bg-white p-4 rounded-2xl border">
-              <input type="checkbox" checked={editingPlan.isFurnished} onChange={(e) => updateField("isFurnished", e.target.checked)} className="w-5 h-5 accent-slate-900" />
+            <label className="mb-6 flex items-center gap-3 rounded-2xl border bg-white p-4">
+              <input
+                type="checkbox"
+                checked={editingPlan.isFurnished}
+                onChange={(event) => updateField("isFurnished", event.target.checked)}
+                className="h-5 w-5 accent-slate-900"
+              />
               <span className="text-sm font-medium">包含家具 (Furnished)</span>
             </label>
 
-            <div className="mb-8 p-6 bg-white rounded-2xl border">
-               <h4 className="text-sm font-medium text-slate-700 mb-2">上传该户型的图片</h4>
-               <p className="mb-4 text-sm leading-6 text-slate-500">
-                 优先上传户型图或平面图；这些图片会直接进入前台详情页的“户型图”展示区域，并继承这条记录的价格与面积。
-               </p>
-               <CloudinaryUploader value={editingPlan.imageUrls} onChange={(urls) => updateField("imageUrls", urls)} />
+            <div className="mb-8 rounded-2xl border bg-white p-6">
+              <h4 className="mb-2 text-sm font-medium text-slate-700">上传该户型的图片</h4>
+              <p className="mb-4 text-sm leading-6 text-slate-500">
+                优先上传户型图或平面图；这些图片会直接进入前台详情页的“户型图”展示区域，并继承这条记录的价格与面积。
+              </p>
+              <CloudinaryUploader
+                value={editingPlan.imageUrls}
+                onChange={(urls) => updateField("imageUrls", urls)}
+              />
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-               <button type="button" onClick={cancelEdit} className="px-6 py-3 rounded-full border bg-white font-medium"> 取消 </button>
-               <button type="submit" disabled={isSubmitting} className="rounded-full bg-slate-950 px-8 py-3 text-white font-medium">
-                  {isSubmitting ? "正在保存中..." : "保存户型"}
-               </button>
+            <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="rounded-full border bg-white px-6 py-3 font-medium"
+              >
+                取消
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="rounded-full bg-slate-950 px-8 py-3 font-medium text-white"
+              >
+                {isSubmitting ? "正在保存中..." : "保存户型"}
+              </button>
             </div>
           </form>
         )}
       </div>
+
       <input
         ref={quickUploadInputRef}
         type="file"
         multiple
         accept="image/*"
         className="hidden"
-        onChange={(e) => { if (e.target.files?.length) handleQuickUpload(e.target.files); }}
+        onChange={(event) => {
+          if (event.target.files?.length) {
+            void handleQuickUpload(event.target.files);
+          }
+        }}
       />
     </div>
   );

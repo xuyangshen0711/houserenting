@@ -217,22 +217,22 @@ function buildDescription(body: UnknownRecord) {
 
   const utilities = asString(body.utilities);
   if (utilities) {
-    sections.push(`Utilities: ${utilities}`);
+    sections.push(`费用说明：${utilities}`);
   }
 
   const inUnitFeatures = asStringArray(body.in_unit_features);
   if (inUnitFeatures.length) {
-    sections.push(`In-unit features: ${inUnitFeatures.join("; ")}`);
+    sections.push(`室内配置：${inUnitFeatures.join("；")}`);
   }
 
   const communityAmenities = asStringArray(body.community_amenities);
   if (communityAmenities.length) {
-    sections.push(`Community amenities: ${communityAmenities.join("; ")}`);
+    sections.push(`社区配套：${communityAmenities.join("；")}`);
   }
 
   const petPolicyDetails = asString(body.pet_policy);
   if (petPolicyDetails && !sections.some((section) => section.includes(petPolicyDetails))) {
-    sections.push(`Pet details: ${petPolicyDetails}`);
+    sections.push(`宠物政策：${petPolicyDetails}`);
   }
 
   return sections.filter(Boolean).join("\n\n");
